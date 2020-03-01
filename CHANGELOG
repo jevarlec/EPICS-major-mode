@@ -1,0 +1,13 @@
+# Changelog - EPICS Major Mode for Emacs
+
+## [0.1.1] - Unreleased
+## Added
+- Highlighting for NPP, PP, NMS and MS
+- comment-dwim functionality
+- README.md
+
+## [0.1.0] - 2020.03.01
+### Added
+- Different highlighting of records if they are input, output or general
+- Highlighting of input and output fields, some fields related to scanning, alarm fields
+- Comment, macro and string highlighting
