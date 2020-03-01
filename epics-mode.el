@@ -57,7 +57,7 @@
              (epics-italic '("record" "field"))
              (epics-links '("INPA" "INPB" "INPC" "INPD" "INPE" "INPF" "INPG" "INPH" "INPI" "INPJ" "INPK" "INPL" "OUTA" "OUTB" "OUTC" "OUTD" "OUTE" "OUTF" "OUTG" "OUTH" "OUTI" "OUTJ" "OUTK" "OUTL" "OUTM" "OUTN" "OUTO" "OUTP" "INP" "OUT" "DOL"))
              (epics-scan '("FLNK" "SCAN" "SDIS" "PHAS" "PINI" "EVNT" "LNK0" "LNK1" "LNK2" "LNK3" "LNK4" "LNK5" "LNK6" "LNK7" "LNK8" "LNK9" "LNKA" "LNKB" "LNKC" "LNKD" "LNKE" "LNKF"))
-             (epics-link-params '("NMS" "NPP" "MS" "PP"))
+             (epics-link-params '("NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
              (epics-alarm '("NSEV" "SEVR" "STAT" "NSTA"))
              (epics-records-gen '("permissive" "subArray" "compress" "dfanout" "fanout" "event" "state" "calc" "aSub" "sub" "seq" "sel"))
              (epics-records-in '("waveform" "stringin" "mbbiDirect" "longin" "int64in" "mbbi" "ai" "bi"))
