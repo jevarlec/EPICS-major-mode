@@ -38,24 +38,24 @@
              ;; define categories of keywords
              (epics-italic '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
              (epics-link-params '("NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
-             (epics-menu-choices '("All" "Specified" "Mask" "High Signal" "Low Signal" "Median Signal" "YES" "NO" "RAW" "Passive" "Event" "I/O Intr" "10 second" "5 second" "2 second" "1 second" ".5 second" ".2 second" ".1 second" "supervisory" "closed_loop" "STRING" "CHAR" "UCHAR" "SHORT" "USHORT" "LONG" "ULONG" "FLOAT" "DOUBLE" "ENUM" "NO_ALARM" "MINOR" "MAJOR" "INVALID" "stream" "asynInt32" "asynInt64" "asynUInt32Digital" "asynFloat64" "asynEnum"))
 
              ;; generate regex string from keyword categories
-             (epics-menu-choices-regexp (regexp-opt epics-menu-choices 'words))
              (epics-italic-regexp (regexp-opt epics-italic 'words))
              (epics-link-params-regexp (regexp-opt epics-link-params 'words)))
 
         `(
           ;; apply faces to generated regex
-          (,epics-menu-choices-regexp 0 'font-lock-variable-name-face t)
           (,epics-italic-regexp . 'epics-mode-face-italic)
           (,epics-link-params-regexp 0 font-lock-constant-face t)
+
+          ;; define regex for menuChoices
+          (,"\\s\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|All\\|CHAR\\|DOUBLE\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|High Signal\\|I\\(?:/O Intr\\|NVALID\\)\\|L\\(?:ONG\\|ow Signal\\)\\|M\\(?:AJOR\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?:_ALARM\\)?\\|Passive\\|RAW\\|S\\(?:HORT\\|TRING\\|pecified\\)\\|U\\(?:CHAR\\|LONG\\|SHORT\\)\\|YES\\|asyn\\(?:Enum\\|Float64\\|Int\\(?:32\\|64\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\\s\"" 0 font-lock-variable-name-face t)
 
           ;; define regex for macro highlighting
           (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t)
 
           ;; define regex for i/o parameters
-          (,"@\\(asyn\\|asynMask\\)(.+?)[^)\" ]*\\|@.+\.proto" 0 font-lock-type-face t)
+          (,"\\s\"@\\(asyn\\|asynMask\\)(.+?)[^)\" ]*\\|@.+\.proto" 0 font-lock-type-face t)
           )))
 
 (defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
