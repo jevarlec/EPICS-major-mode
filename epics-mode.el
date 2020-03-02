@@ -26,24 +26,6 @@
 ;;; Code:
 
 ;; define custom faces
-(defface epics-mode-face-record-in
-  '((t :foreground "#dc322f"
-       :weight extra-bold))
-  "Face name to be used for input records"
-  :group 'epics-mode)
-
-(defface epics-mode-face-record-out
-  '((t :foreground "#b58900"
-       :weight extra-bold))
-  "Face name to be used for output records"
-  :group 'epics-mode)
-
-(defface epics-mode-face-record-gen
-  '((t :inherit font-lock-builtin-face
-       :weight extra-bold))
-  "Face name to be used for general records"
-  :group 'epics-mode)
-
 (defface epics-mode-face-italic
   '((t :inherit shadow
        :slant italic))
@@ -54,38 +36,26 @@
 (setq epics-font-lock-keywords
       (let* (
              ;; define categories of keywords
-             (epics-italic '("record" "field"))
-             (epics-links '("INPA" "INPB" "INPC" "INPD" "INPE" "INPF" "INPG" "INPH" "INPI" "INPJ" "INPK" "INPL" "OUTA" "OUTB" "OUTC" "OUTD" "OUTE" "OUTF" "OUTG" "OUTH" "OUTI" "OUTJ" "OUTK" "OUTL" "OUTM" "OUTN" "OUTO" "OUTP" "INP" "OUT" "DOL"))
-             (epics-scan '("FLNK" "SCAN" "SDIS" "PHAS" "PINI" "EVNT" "LNK0" "LNK1" "LNK2" "LNK3" "LNK4" "LNK5" "LNK6" "LNK7" "LNK8" "LNK9" "LNKA" "LNKB" "LNKC" "LNKD" "LNKE" "LNKF"))
+             (epics-italic '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
              (epics-link-params '("NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
-             (epics-alarm '("NSEV" "SEVR" "STAT" "NSTA"))
-             (epics-records-gen '("permissive" "subArray" "compress" "dfanout" "fanout" "event" "state" "calc" "aSub" "sub" "seq" "sel"))
-             (epics-records-in '("waveform" "stringin" "mbbiDirect" "longin" "int64in" "mbbi" "ai" "bi"))
-             (epics-records-out '("stringout" "mbboDirect" "longout" "calcout" "int64out" "mbbo" "ao" "bo"))
+             (epics-menu-choices '("All" "Specified" "Mask" "High Signal" "Low Signal" "Median Signal" "YES" "NO" "RAW" "Passive" "Event" "I/O Intr" "10 second" "5 second" "2 second" "1 second" ".5 second" ".2 second" ".1 second" "supervisory" "closed_loop" "STRING" "CHAR" "UCHAR" "SHORT" "USHORT" "LONG" "ULONG" "FLOAT" "DOUBLE" "ENUM" "NO_ALARM" "MINOR" "MAJOR" "INVALID" "stream" "asynInt32" "asynInt64" "asynIntUInt32Digital" "asynFloat64" "asynEnum"))
 
              ;; generate regex string from keyword categories
+             (epics-menu-choices-regexp (regexp-opt epics-menu-choices 'words))
              (epics-italic-regexp (regexp-opt epics-italic 'words))
-             (epics-links-regexp (regexp-opt epics-links 'words))
-             (epics-scan-regexp (regexp-opt epics-scan 'words))
-             (epics-link-params-regexp (regexp-opt epics-link-params 'words))
-             (epics-alarm-regexp (regexp-opt epics-alarm 'words))
-             (epics-records-gen-regexp (regexp-opt epics-records-gen 'words))
-             (epics-records-in-regexp (regexp-opt epics-records-in 'words))
-             (epics-records-out-regexp (regexp-opt epics-records-out 'words)))
+             (epics-link-params-regexp (regexp-opt epics-link-params 'words)))
 
         `(
           ;; apply faces to generated regex
+          (,epics-menu-choices-regexp 0 'font-lock-variable-name-face t)
           (,epics-italic-regexp . 'epics-mode-face-italic)
-          (,epics-records-gen-regexp . 'epics-mode-face-record-gen)
-          (,epics-records-in-regexp . 'epics-mode-face-record-in)
-          (,epics-records-out-regexp . 'epics-mode-face-record-out)
-          (,epics-links-regexp . font-lock-type-face)
           (,epics-link-params-regexp 0 font-lock-constant-face t)
-          (,epics-scan-regexp . font-lock-constant-face)
-          (,epics-alarm-regexp . font-lock-warning-face)
 
           ;; define regex for macro highlighting
-          (,"$(\\([^(]+?\\))" 0 font-lock-warning-face t)
+          (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t)
+
+          ;; define regex for i/o parameters
+          (,"@\\(asyn\\|asynMask\\)(.+?)[^ ]*\\|@.+\.proto" 0 font-lock-type-face t)
           )))
 
 (defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
