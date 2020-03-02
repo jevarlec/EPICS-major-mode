@@ -38,7 +38,7 @@
              ;; define categories of keywords
              (epics-italic '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
              (epics-link-params '("NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
-             (epics-menu-choices '("All" "Specified" "Mask" "High Signal" "Low Signal" "Median Signal" "YES" "NO" "RAW" "Passive" "Event" "I/O Intr" "10 second" "5 second" "2 second" "1 second" ".5 second" ".2 second" ".1 second" "supervisory" "closed_loop" "STRING" "CHAR" "UCHAR" "SHORT" "USHORT" "LONG" "ULONG" "FLOAT" "DOUBLE" "ENUM" "NO_ALARM" "MINOR" "MAJOR" "INVALID" "stream" "asynInt32" "asynInt64" "asynIntUInt32Digital" "asynFloat64" "asynEnum"))
+             (epics-menu-choices '("All" "Specified" "Mask" "High Signal" "Low Signal" "Median Signal" "YES" "NO" "RAW" "Passive" "Event" "I/O Intr" "10 second" "5 second" "2 second" "1 second" ".5 second" ".2 second" ".1 second" "supervisory" "closed_loop" "STRING" "CHAR" "UCHAR" "SHORT" "USHORT" "LONG" "ULONG" "FLOAT" "DOUBLE" "ENUM" "NO_ALARM" "MINOR" "MAJOR" "INVALID" "stream" "asynInt32" "asynInt64" "asynUInt32Digital" "asynFloat64" "asynEnum"))
 
              ;; generate regex string from keyword categories
              (epics-menu-choices-regexp (regexp-opt epics-menu-choices 'words))
@@ -55,7 +55,7 @@
           (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t)
 
           ;; define regex for i/o parameters
-          (,"@\\(asyn\\|asynMask\\)(.+?)[^ ]*\\|@.+\.proto" 0 font-lock-type-face t)
+          (,"@\\(asyn\\|asynMask\\)(.+?)[^)\" ]*\\|@.+\.proto" 0 font-lock-type-face t)
           )))
 
 (defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
