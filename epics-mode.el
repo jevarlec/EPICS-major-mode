@@ -85,4 +85,3 @@
 (provide 'epics-mode)
 
 ;;; epics-mode.el ends here
-;; (regexp-opt '("All" "Specified" "Mask" "High Signal" "Low Signal" "Median Signal" "YES" "NO" "RAW" "Passive" "Event" "I/O Intr" "10 second" "5 second" "2 second" "1 second" ".5 second" ".2 second" ".1 second" "supervisory" "closed_loop" "STRING" "CHAR" "UCHAR" "SHORT" "USHORT" "LONG" "ULONG" "FLOAT" "DOUBLE" "ENUM" "NO_ALARM" "MINOR" "MAJOR" "INVALID" "stream" "asynInt32" "asynInt64" "asynUInt32Digital" "asynFloat64" "asynEnum") t)
