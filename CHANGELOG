@@ -1,5 +1,9 @@
 # Changelog - EPICS Major Mode for Emacs
 
+## [0.2.1] - 2020.03.09
+## Fixed
+- MenuChoices syntax coloring should not color quotation marks
+
 ## [0.2.0] - 2020.03.09
 ## Changed
 - MenuChoices are now highlighted
