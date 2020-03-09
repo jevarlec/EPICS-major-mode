@@ -50,9 +50,7 @@
           ;; apply faces to generated regex
           (,epics-italic-regexp . 'epics-mode-face-italic)
           (,epics-link-params-regexp 0 font-lock-constant-face t)
-
-          ;; define regex for menuChoices
-          (,"\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|All\\|CHAR\\|DOUBLE\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|High Signal\\|I\\(?:/O Intr\\|NVALID\\)\\|L\\(?:ONG\\|ow Signal\\)\\|M\\(?:AJOR\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?:_ALARM\\)?\\|Passive\\|RAW\\|S\\(?:HORT\\|TRING\\|pecified\\)\\|U\\(?:CHAR\\|LONG\\|SHORT\\)\\|YES\\|asyn\\(?:Enum\\|Float64\\|Int\\(?:32\\|64\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\"" 0 font-lock-variable-name-face t)
+          (,epics-menu-choices-regexp 1 font-lock-variable-name-face t)
 
           ;; define regex for macro highlighting
           (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t)
