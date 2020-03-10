@@ -29,9 +29,8 @@
 (add-to-list 'auto-mode-alist '("\\.db\\|.template\\'" . epics-mode))
 
 ;; define custom faces
-(defface epics-mode-face-italic
-  '((t :inherit shadow
-       :slant italic))
+(defface epics-mode-face-shadow
+  '((t :inherit shadow))
   "Face name to be used for records and fields"
   :group 'epics-mode)
 
@@ -39,19 +38,19 @@
 (setq epics-font-lock-keywords
       (let* (
              ;; define categories of keywords
-             (epics-italic '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
+             (epics-shadow '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
              (epics-link-params '("NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
 
              ;; define premade regex strings
              (epics-menu-choices-regexp "\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|All\\|CHAR\\|DOUBLE\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|High Signal\\|I\\(?:/O Intr\\|NVALID\\)\\|L\\(?:ONG\\|ow Signal\\)\\|M\\(?:AJOR\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?:_ALARM\\)?\\|Passive\\|RAW\\|S\\(?:HORT\\|TRING\\|pecified\\)\\|U\\(?:CHAR\\|LONG\\|SHORT\\)\\|YES\\|asyn\\(?:Enum\\|Float64\\|Int\\(?:32\\|64\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\"")
 
              ;; generate regex string from keyword categories
-             (epics-italic-regexp (regexp-opt epics-italic 'words))
+             (epics-shadow-regexp (regexp-opt epics-shadow 'words))
              (epics-link-params-regexp (regexp-opt epics-link-params 'words)))
 
         `(
           ;; apply faces to generated regex
-          (,epics-italic-regexp . 'epics-mode-face-italic)
+          (,epics-shadow-regexp . 'epics-mode-face-shadow)
           (,epics-link-params-regexp 0 font-lock-constant-face t)
           (,epics-menu-choices-regexp 1 font-lock-variable-name-face t)
 
