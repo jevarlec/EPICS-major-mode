@@ -25,6 +25,9 @@
 
 ;;; Code:
 
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.db\\|.template\\'" . epics-mode))
+
 ;; define custom faces
 (defface epics-mode-face-italic
   '((t :inherit shadow
