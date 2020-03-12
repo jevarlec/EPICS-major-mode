@@ -1,9 +1,14 @@
 # Changelog - EPICS Major Mode for Emacs
 
-## [Unreleased]
+## [0.2.2] - 2020.03.12
 ## Added
 - Autoload
 - LICENCE file
+- MSS to epics-link-params
+
+## Changed
+- Reverse regex order, so syntax colors correctly
+- Change mode name to 'EPICS'
 
 ## [0.2.1] - 2020.03.09
 ## Fixed

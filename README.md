@@ -2,7 +2,7 @@
 
 Author: Jernej Varlec
 
-Version: 0.2.1
+Version: 0.2.2
 
 ## Installation and use
 
