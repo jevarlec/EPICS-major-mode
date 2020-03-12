@@ -54,12 +54,11 @@
           (,epics-link-params-regexp 0 font-lock-constant-face t)
           (,epics-menu-choices-regexp 1 font-lock-variable-name-face t)
 
-          ;; define regex for macro highlighting
-          (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t)
-
           ;; define regex for i/o parameters
-          (,"\\(@\\(asyn\\|asynMask\\)(.+?)\\|@.+\.proto\\)" 0 font-lock-type-face t)
-          )))
+          (,"\"\\(@\\(asyn\\|asynMask\\)\\(($(.*?).+?)\\|(.+?)\\)\\|@.+?\.proto\\)" 1 font-lock-type-face t)
+
+          ;; define regex for macro highlighting
+          (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
 
 (defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
 
