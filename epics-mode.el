@@ -39,7 +39,7 @@
       (let* (
              ;; define categories of keywords
              (epics-shadow '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
-             (epics-link-params '("NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
+             (epics-link-params '("MSS" "NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
 
              ;; define premade regex strings
              (epics-menu-choices-regexp "\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|All\\|CHAR\\|DOUBLE\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|High Signal\\|I\\(?:/O Intr\\|NVALID\\)\\|L\\(?:ONG\\|ow Signal\\)\\|M\\(?:AJOR\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?:_ALARM\\)?\\|Passive\\|RAW\\|S\\(?:HORT\\|TRING\\|pecified\\)\\|U\\(?:CHAR\\|LONG\\|SHORT\\)\\|YES\\|asyn\\(?:Enum\\|Float64\\|Int\\(?:32\\|64\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\"")
