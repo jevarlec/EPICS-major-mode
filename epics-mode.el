@@ -72,7 +72,7 @@
 
         synTable))
 
-(define-derived-mode epics-mode fundamental-mode "EPICS-mode"
+(define-derived-mode epics-mode fundamental-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
 
   ;; enable syntax highlighting
@@ -80,9 +80,7 @@
 
   ;; comment-dwim functionality
   (setq-local comment-start "# ")
-  (setq-local comment-end "")
-
-  )
+  (setq-local comment-end ""))
 
 (provide 'epics-mode)
 
