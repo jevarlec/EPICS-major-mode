@@ -2,7 +2,7 @@
 
 ## [0.2.2] - 2020.03.12
 ## Added
-- Autoload
+- Autoload for .db, .dbd, .template files
 - LICENCE file
 - MSS to epics-link-params
 
