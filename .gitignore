@@ -2,3 +2,4 @@
 *.db
 *.template
 expr.el
+dbd/
