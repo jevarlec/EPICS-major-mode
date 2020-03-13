@@ -26,7 +26,7 @@
 ;;; Code:
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.db\\|.template\\'" . epics-mode))
+(add-to-list 'auto-mode-alist '("\\.db\\|.template\\|.dbd\\'" . epics-mode))
 
 ;; define custom faces
 (defface epics-mode-face-shadow
