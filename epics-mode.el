@@ -42,7 +42,7 @@
              (epics-link-params '("MSS" "NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
 
              ;; define premade regex strings
-             (epics-menu-choices-regexp "\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|Al\\(?:l\\|ways\\)\\|BAD_SUB\\|C\\(?:ALC\\|HAR\\|O\\(?:MM\\|S\\)\\|ontinue normally\\)\\|D\\(?:ISABLE\\|OUBLE\\|on't drive outputs\\)\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|H\\(?:I\\(?:GH\\|HI\\)\\|WLIMIT\\|igh Signal\\)\\|I\\(?:/O Intr\\|N\\(?:T64\\|VALID\\)\\)\\|L\\(?:IN\\(?:EAR\\|K\\)\\|O\\(?:LO\\|NG\\|W\\)\\|ow Signal\\)\\|M\\(?:AJOR\\|EDIUM\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?: CONVERSION\\|_ALARM\\)?\\|On Change\\|P\\(?:AUSED?\\|assive\\)\\|R\\(?:AW\\|EAD\\(?:_ACCESS\\)?\\|UN\\(?:NING\\)?\\)\\|S\\(?:CAN\\|HORT\\|IMM\\|LOPE\\|OFT\\|T\\(?:ATE\\|RING\\)\\|et output to IVOV\\|pecified\\)\\|TIMEOUT\\|U\\(?:CHAR\\|DF\\|INT64\\|LONG\\|SHORT\\)\\|WRITE\\(?:_ACCESS\\)?\\|YES\\|asyn\\(?:Enum\\|Float\\(?:32Array\\(?:In\\|Out\\)\\|64\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\)\\|Int\\(?:16Array\\(?:In\\|Out\\)\\|32\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\|64\\(?:Array\\(?:In\\|Out\\)\\|TimeSeries\\)?\\|8Array\\(?:In\\|Out\\)\\)\\|Octet\\(?:CmdResponse\\|Read\\|Write\\(?:Binary\\|Read\\)?\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\"")
+             (epics-keywords-regexp "\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|Al\\(?:l\\|ways\\)\\|BAD_SUB\\|C\\(?:ALC\\|HAR\\|O\\(?:MM\\|S\\)\\|ontinue normally\\)\\|D\\(?:ISABLE\\|OUBLE\\|on't drive outputs\\)\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|H\\(?:I\\(?:GH\\|HI\\)\\|WLIMIT\\|igh Signal\\)\\|I\\(?:/O Intr\\|N\\(?:T64\\|VALID\\)\\)\\|L\\(?:IN\\(?:EAR\\|K\\)\\|O\\(?:LO\\|NG\\|W\\)\\|ow Signal\\)\\|M\\(?:AJOR\\|EDIUM\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?: CONVERSION\\|_ALARM\\)?\\|On Change\\|P\\(?:AUSED?\\|assive\\)\\|R\\(?:AW\\|EAD\\(?:_ACCESS\\)?\\|UN\\(?:NING\\)?\\)\\|S\\(?:CAN\\|HORT\\|IMM\\|LOPE\\|OFT\\|T\\(?:ATE\\|RING\\)\\|et output to IVOV\\|pecified\\)\\|TIMEOUT\\|U\\(?:CHAR\\|DF\\|INT64\\|LONG\\|SHORT\\)\\|WRITE\\(?:_ACCESS\\)?\\|YES\\|asyn\\(?:Enum\\|Float\\(?:32Array\\(?:In\\|Out\\)\\|64\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\)\\|Int\\(?:16Array\\(?:In\\|Out\\)\\|32\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\|64\\(?:Array\\(?:In\\|Out\\)\\|TimeSeries\\)?\\|8Array\\(?:In\\|Out\\)\\)\\|Octet\\(?:CmdResponse\\|Read\\|Write\\(?:Binary\\|Read\\)?\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\"")
 
              ;; generate regex string from keyword categories
              (epics-shadow-regexp (regexp-opt epics-shadow 'words))
@@ -52,7 +52,7 @@
           ;; apply faces to generated regex
           (,epics-shadow-regexp . 'epics-mode-face-shadow)
           (,epics-link-params-regexp 0 font-lock-constant-face t)
-          (,epics-menu-choices-regexp 1 font-lock-variable-name-face t)
+          (,epics-keywords-regexp 1 font-lock-variable-name-face t)
 
           ;; define regex for i/o parameters
           (,"\"\\(@\\(asyn\\|asynMask\\)\\(($(.*?).+?)\\|(.+?)\\)\\|@.+?\.proto\\)" 1 font-lock-type-face t)
