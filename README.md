@@ -8,4 +8,4 @@ Version: 0.2.2
 
 Until a release on MELPA, you have to manually evaluate:
 1. open *epics-mode.el* in emacs and run `M-x eval-buffer`.
-2. opening a .db or .template file will autoload epics-mode
+2. opening a .dbd, .db or .template file will autoload epics-mode
