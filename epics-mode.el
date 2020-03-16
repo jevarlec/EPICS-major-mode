@@ -4,7 +4,7 @@
 
 ;; Author: Jernej Varlec <jernej@varlec.si>
 ;; Keywords: elisp, epics
-;; Version: 0.2.2
+;; Version: 0.3.0
 
 ;; This file is not part of GNU Emacs.
 
@@ -41,7 +41,7 @@
              (epics-shadow '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
              (epics-link-params '("MSS" "NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
 
-             ;; define premade regex strings
+             ;; define premade regex string for keywords
              (epics-keywords-regexp "\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|Al\\(?:l\\|ways\\)\\|BAD_SUB\\|C\\(?:ALC\\|HAR\\|O\\(?:MM\\|S\\)\\|ontinue normally\\)\\|D\\(?:ISABLE\\|OUBLE\\|on't drive outputs\\)\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|H\\(?:I\\(?:GH\\|HI\\)\\|WLIMIT\\|igh Signal\\)\\|I\\(?:/O Intr\\|N\\(?:T64\\|VALID\\)\\)\\|L\\(?:IN\\(?:EAR\\|K\\)\\|O\\(?:LO\\|NG\\|W\\)\\|ow Signal\\)\\|M\\(?:AJOR\\|EDIUM\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?: CONVERSION\\|_ALARM\\)?\\|On Change\\|P\\(?:AUSED?\\|assive\\)\\|R\\(?:AW\\|EAD\\(?:_ACCESS\\)?\\|UN\\(?:NING\\)?\\)\\|S\\(?:CAN\\|HORT\\|IMM\\|LOPE\\|OFT\\|T\\(?:ATE\\|RING\\)\\|et output to IVOV\\|pecified\\)\\|TIMEOUT\\|U\\(?:CHAR\\|DF\\|INT64\\|LONG\\|SHORT\\)\\|WRITE\\(?:_ACCESS\\)?\\|YES\\|asyn\\(?:Enum\\|Float\\(?:32Array\\(?:In\\|Out\\)\\|64\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\)\\|Int\\(?:16Array\\(?:In\\|Out\\)\\|32\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\|64\\(?:Array\\(?:In\\|Out\\)\\|TimeSeries\\)?\\|8Array\\(?:In\\|Out\\)\\)\\|Octet\\(?:CmdResponse\\|Read\\|Write\\(?:Binary\\|Read\\)?\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\"")
 
              ;; generate regex string from keyword categories
