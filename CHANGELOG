@@ -1,15 +1,37 @@
 # Changelog - EPICS Major Mode for Emacs
 
+## [0.3.1] - 2020.03.20
+### Changed
+- Improve asyn regex to allow multiple macros
+- Separate asyn and streamdevice regexes
+
+## [0.3.0] - 2020.03.16
+### Added
+- Finish adding epics keywords for menuChoices, stream and asyn dtypes
+
+### Changed
+- menu-choices are now refered to as keywords
+
+## [0.2.2] - 2020.03.12
+### Added
+- Autoload for .db, .dbd, .template files
+- LICENCE file
+- MSS to epics-link-params
+
+## Changed
+- Reverse regex order, so syntax colors correctly
+- Change mode name to 'EPICS'
+
 ## [0.2.1] - 2020.03.09
-## Fixed
+### Fixed
 - MenuChoices syntax coloring should not color quotation marks
 
 ## [0.2.0] - 2020.03.09
-## Changed
+### Changed
 - MenuChoices are now highlighted
 
 ## [0.1.1] - 2020.03.05
-## Added
+### Added
 - Highlighting for CA, CPP, CP, NPP, PP, NMS and MS
 - comment-dwim functionality
 - README.md

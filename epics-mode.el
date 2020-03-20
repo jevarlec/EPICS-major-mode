@@ -4,7 +4,7 @@
 
 ;; Author: Jernej Varlec <jernej@varlec.si>
 ;; Keywords: elisp, epics
-;; Version: 0.1
+;; Version: 0.3.1
 
 ;; This file is not part of GNU Emacs.
 
@@ -25,10 +25,12 @@
 
 ;;; Code:
 
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.db\\|.template\\|.dbd\\'" . epics-mode))
+
 ;; define custom faces
-(defface epics-mode-face-italic
-  '((t :inherit shadow
-       :slant italic))
+(defface epics-mode-face-shadow
+  '((t :inherit shadow))
   "Face name to be used for records and fields"
   :group 'epics-mode)
 
@@ -36,28 +38,30 @@
 (setq epics-font-lock-keywords
       (let* (
              ;; define categories of keywords
-             (epics-italic '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
-             (epics-link-params '("NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
+             (epics-shadow '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
+             (epics-link-params '("MSS" "NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
 
-             ;; define premade regex strings
-             (epics-menu-choices-regexp "\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|All\\|CHAR\\|DOUBLE\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|High Signal\\|I\\(?:/O Intr\\|NVALID\\)\\|L\\(?:ONG\\|ow Signal\\)\\|M\\(?:AJOR\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?:_ALARM\\)?\\|Passive\\|RAW\\|S\\(?:HORT\\|TRING\\|pecified\\)\\|U\\(?:CHAR\\|LONG\\|SHORT\\)\\|YES\\|asyn\\(?:Enum\\|Float64\\|Int\\(?:32\\|64\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\"")
+             ;; define premade regex string for keywords
+             (epics-keywords-regexp "\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|Al\\(?:l\\|ways\\)\\|BAD_SUB\\|C\\(?:ALC\\|HAR\\|O\\(?:MM\\|S\\)\\|ontinue normally\\)\\|D\\(?:ISABLE\\|OUBLE\\|on't drive outputs\\)\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|H\\(?:I\\(?:GH\\|HI\\)\\|WLIMIT\\|igh Signal\\)\\|I\\(?:/O Intr\\|N\\(?:T64\\|VALID\\)\\)\\|L\\(?:IN\\(?:EAR\\|K\\)\\|O\\(?:LO\\|NG\\|W\\)\\|ow Signal\\)\\|M\\(?:AJOR\\|EDIUM\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?: CONVERSION\\|_ALARM\\)?\\|On Change\\|P\\(?:AUSED?\\|assive\\)\\|R\\(?:AW\\|EAD\\(?:_ACCESS\\)?\\|UN\\(?:NING\\)?\\)\\|S\\(?:CAN\\|HORT\\|IMM\\|LOPE\\|OFT\\|T\\(?:ATE\\|RING\\)\\|et output to IVOV\\|pecified\\)\\|TIMEOUT\\|U\\(?:CHAR\\|DF\\|INT64\\|LONG\\|SHORT\\)\\|WRITE\\(?:_ACCESS\\)?\\|YES\\|asyn\\(?:Enum\\|Float\\(?:32Array\\(?:In\\|Out\\)\\|64\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\)\\|Int\\(?:16Array\\(?:In\\|Out\\)\\|32\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\|64\\(?:Array\\(?:In\\|Out\\)\\|TimeSeries\\)?\\|8Array\\(?:In\\|Out\\)\\)\\|Octet\\(?:CmdResponse\\|Read\\|Write\\(?:Binary\\|Read\\)?\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\"")
 
              ;; generate regex string from keyword categories
-             (epics-italic-regexp (regexp-opt epics-italic 'words))
+             (epics-shadow-regexp (regexp-opt epics-shadow 'words))
              (epics-link-params-regexp (regexp-opt epics-link-params 'words)))
 
         `(
           ;; apply faces to generated regex
-          (,epics-italic-regexp . 'epics-mode-face-italic)
+          (,epics-shadow-regexp . 'epics-mode-face-shadow)
           (,epics-link-params-regexp 0 font-lock-constant-face t)
-          (,epics-menu-choices-regexp 1 font-lock-variable-name-face t)
+          (,epics-keywords-regexp 1 font-lock-variable-name-face t)
+
+          ;; define regex for asyn i/o parameters
+          (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\)[A-Za-z0-9_-]*?\"" 1 font-lock-type-face t)
+
+          ;; define regex for streamdevice i/o parameters
+          (,"\"\\(@.+?\.proto\\)" 1 font-lock-type-face t)
 
           ;; define regex for macro highlighting
-          (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t)
-
-          ;; define regex for i/o parameters
-          (,"\\(@\\(asyn\\|asynMask\\)(.+?)\\|@.+\.proto\\)" 0 font-lock-type-face t)
-          )))
+          (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
 
 (defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
 
@@ -71,7 +75,7 @@
 
         synTable))
 
-(define-derived-mode epics-mode fundamental-mode "EPICS-mode"
+(define-derived-mode epics-mode fundamental-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
 
   ;; enable syntax highlighting
@@ -79,9 +83,7 @@
 
   ;; comment-dwim functionality
   (setq-local comment-start "# ")
-  (setq-local comment-end "")
-
-  )
+  (setq-local comment-end ""))
 
 (provide 'epics-mode)
 
