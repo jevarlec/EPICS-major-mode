@@ -54,8 +54,11 @@
           (,epics-link-params-regexp 0 font-lock-constant-face t)
           (,epics-keywords-regexp 1 font-lock-variable-name-face t)
 
-          ;; define regex for i/o parameters
-          (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\|@.+?\.proto\\)[A-Za-z0-9]*?\"" 1 font-lock-type-face t)
+          ;; define regex for asyn i/o parameters
+          (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\)[A-Za-z0-9]*?\"" 1 font-lock-type-face t)
+
+          ;; define regex for streamdevice i/o parameters
+          (,"\"\\(@.+?\.proto\\)" 1 font-lock-type-face t)
 
           ;; define regex for macro highlighting
           (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
