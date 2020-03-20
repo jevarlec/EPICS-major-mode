@@ -4,7 +4,7 @@
 
 ;; Author: Jernej Varlec <jernej@varlec.si>
 ;; Keywords: elisp, epics
-;; Version: 0.3.0
+;; Version: 0.3.1
 
 ;; This file is not part of GNU Emacs.
 
@@ -55,7 +55,7 @@
           (,epics-keywords-regexp 1 font-lock-variable-name-face t)
 
           ;; define regex for asyn i/o parameters
-          (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\)[A-Za-z0-9]*?\"" 1 font-lock-type-face t)
+          (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\)[A-Za-z0-9_-]*?\"" 1 font-lock-type-face t)
 
           ;; define regex for streamdevice i/o parameters
           (,"\"\\(@.+?\.proto\\)" 1 font-lock-type-face t)
