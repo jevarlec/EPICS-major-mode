@@ -13,7 +13,7 @@
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
 
-;; This program is distributed in the hope that it will be useful,
+;; This program is distribute"d in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
@@ -40,11 +40,12 @@
              ;; define categories of keywords
              (epics-shadow '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
              (epics-link-params '("MSS" "NMS" "NPP" "CPP" "MS" "PP" "CA" "CP"))
+             (epics-keywords '("All" "Specified" "Mask" "High Signal" "Low Signal" "Median Signal" "YES" "NO" "RUN" "RUNNING" "PAUSE" "PAUSED" "RAW" "Passive" "Event" "I/O Intr" "10 second" "5 second" "2 second" "1 second" ".5 second" ".2 second" ".1 second" "supervisory" "closed_loop" "STRING" "CHAR" "UCHAR" "SHORT" "USHORT" "LONG" "ULONG" "FLOAT" "DOUBLE" "INT64" "UINT64" "ENUM" "NO_ALARM" "MINOR" "MAJOR" "INVALID" "stream" "asynInt32" "asynInt32Average" "asynInt8ArrayIn" "asynInt8ArrayOut" "asynInt16ArrayIn" "asynInt16ArrayOut" "asynInt32ArrayIn" "asynInt32ArrayOut" "asynInt64ArrayIn" "asynInt64ArrayOut" "asynInt32TimeSeries" "asynInt64" "asynInt64TimeSeries" "asynUInt32Digital" "asynFloat64" "asynFloat64Average" "asynFloat32ArrayIn" "asynFloat32ArrayOut" "asynFloat64ArrayIn" "asynFloat64ArrayOut" "asynFloat64TimeSeries" "asynEnum" "asynOctetRead" "asynOctetWrite" "asynOctetWriteRead" "asynOctetWriteBinary" "asynOctetCmdResponse" "READ" "WRITE" "HIHI" "HIGH" "LOLO" "LOW" "STATE" "COS" "COMM" "TIMEOUT" "HWLIMIT" "CALC" "SCAN" "LINK" "SOFT" "BAD_SUB" "UDF" "DISABLE" "SIMM" "READ_ACCESS" "WRITE_ACCESS" "NO CONVERSION" "SLOPE" "LINEAR" "Continue normally" "Don't drive outputs" "Set output to IVOV" "On Change" "Always" "MEDIUM"))
 
              ;; define premade regex string for keywords
-             (epics-keywords-regexp "\"\\(\\.\\(?:[125] second\\)\\|1\\(?:0? second\\)\\|2 second\\|5 second\\|Al\\(?:l\\|ways\\)\\|BAD_SUB\\|C\\(?:ALC\\|HAR\\|O\\(?:MM\\|S\\)\\|ontinue normally\\)\\|D\\(?:ISABLE\\|OUBLE\\|on't drive outputs\\)\\|E\\(?:NUM\\|vent\\)\\|FLOAT\\|H\\(?:I\\(?:GH\\|HI\\)\\|WLIMIT\\|igh Signal\\)\\|I\\(?:/O Intr\\|N\\(?:T64\\|VALID\\)\\)\\|L\\(?:IN\\(?:EAR\\|K\\)\\|O\\(?:LO\\|NG\\|W\\)\\|ow Signal\\)\\|M\\(?:AJOR\\|EDIUM\\|INOR\\|ask\\|edian Signal\\)\\|NO\\(?: CONVERSION\\|_ALARM\\)?\\|On Change\\|P\\(?:AUSED?\\|assive\\)\\|R\\(?:AW\\|EAD\\(?:_ACCESS\\)?\\|UN\\(?:NING\\)?\\)\\|S\\(?:CAN\\|HORT\\|IMM\\|LOPE\\|OFT\\|T\\(?:ATE\\|RING\\)\\|et output to IVOV\\|pecified\\)\\|TIMEOUT\\|U\\(?:CHAR\\|DF\\|INT64\\|LONG\\|SHORT\\)\\|WRITE\\(?:_ACCESS\\)?\\|YES\\|asyn\\(?:Enum\\|Float\\(?:32Array\\(?:In\\|Out\\)\\|64\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\)\\|Int\\(?:16Array\\(?:In\\|Out\\)\\|32\\(?:A\\(?:rray\\(?:In\\|Out\\)\\|verage\\)\\|TimeSeries\\)?\\|64\\(?:Array\\(?:In\\|Out\\)\\|TimeSeries\\)?\\|8Array\\(?:In\\|Out\\)\\)\\|Octet\\(?:CmdResponse\\|Read\\|Write\\(?:Binary\\|Read\\)?\\)\\|UInt32Digital\\)\\|closed_loop\\|s\\(?:tream\\|upervisory\\)\\)\"")
 
              ;; generate regex string from keyword categories
+             (epics-keywords-regexp (regexp-opt epics-keywords 'words))
              (epics-shadow-regexp (regexp-opt epics-shadow 'words))
              (epics-link-params-regexp (regexp-opt epics-link-params 'words)))
 
@@ -52,7 +53,7 @@
           ;; apply faces to generated regex
           (,epics-shadow-regexp . 'epics-mode-face-shadow)
           (,epics-link-params-regexp 0 font-lock-constant-face t)
-          (,epics-keywords-regexp 1 font-lock-variable-name-face t)
+          (,(format "\"%s\"" epics-keywords-regexp) 1 font-lock-variable-name-face t)
 
           ;; define regex for asyn i/o parameters
           (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\)[A-Za-z0-9_-]*?\"" 1 font-lock-type-face t)
