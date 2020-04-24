@@ -1,9 +1,8 @@
 # Changelog - EPICS Major Mode for Emacs
 
-## [0.3.2] - 2020.03.20
+## [unreleased] -
 ### Changed
 - Dehardcoded keywords
-- Mode now inherits from prog-mode
 
 ## [0.3.1] - 2020.03.20
 ### Changed
