@@ -86,7 +86,10 @@
 
   ;; comment-dwim functionality
   (setq-local comment-start "# ")
-  (setq-local comment-end ""))
+  (setq-local comment-end "")
+
+  (setq-local indent-tabs-mode nil)
+  (setq-local tab-width 4))
 
 (provide 'epics-mode)
 
