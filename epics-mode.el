@@ -62,7 +62,6 @@
           ;; define regex for macro highlighting
           (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
 
-(defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
 
 ;; indentation function
 (defun epics-indent-line ()
@@ -87,6 +86,9 @@
       (beginning-of-line)
       (skip-chars-forward " \t")
       (indent-to indent))))
+
+;; syntax table
+(defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
 
 ;; set # as a comment symbol
 (setq epics-mode-syntax-table
