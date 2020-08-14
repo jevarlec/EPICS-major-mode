@@ -64,6 +64,30 @@
 
 (defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
 
+;; indentation function
+(defun epics-indent-line ()
+  "Indent the line based on brace depth"
+
+  (defun epics-calc-indent ()
+    "Calculate the depth of indentation for the current line"
+    (let (indent)
+      (save-excursion
+        (back-to-indentation)
+        (let* ((depth (car (syntax-ppss)))
+               (base (* 4 depth)))
+          (unless (= depth 0)
+            (setq indent base)
+            (when (looking-at "\\s)")
+              (setq indent (- base 4))))))
+      indent))
+
+  (let ((indent (epics-calc-indent)))
+    (unless (or (null indent)
+                (zerop indent))
+      (beginning-of-line)
+      (skip-chars-forward " \t")
+      (indent-to indent))))
+
 ;; set # as a comment symbol
 (setq epics-mode-syntax-table
       (let ((synTable (make-syntax-table)))
@@ -88,8 +112,8 @@
   (setq-local comment-start "# ")
   (setq-local comment-end "")
 
-  (setq-local indent-tabs-mode nil)
-  (setq-local tab-width 4))
+  ;; epics indentation function
+  (setq-local indent-line-function 'epics-indent-line))
 
 (provide 'epics-mode)
 
