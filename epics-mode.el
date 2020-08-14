@@ -78,7 +78,7 @@
   "Return non-nil if inside comment or string"
   (or (nth 3 (syntax-ppss)) (nth 4 (syntax-ppss))))
 
-(define-derived-mode epics-mode fundamental-mode "EPICS"
+(define-derived-mode epics-mode prog-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
 
   ;; enable syntax highlighting
