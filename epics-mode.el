@@ -84,6 +84,7 @@
     (unless (or (null indent)
                 (zerop indent))
       (beginning-of-line)
+      (delete-horizontal-space)
       (skip-chars-forward " \t")
       (indent-to indent))))
 
