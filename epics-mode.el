@@ -89,10 +89,11 @@
   (let ((indent (epics-calc-indent)))
     (unless (or (null indent)
                 (zerop indent))
-      (beginning-of-line)
-      (delete-horizontal-space)
-      (skip-chars-forward " \t")
-      (indent-to indent))))
+      (unless (= indent (current-column))
+        (beginning-of-line)
+        (delete-horizontal-space)
+        (skip-chars-forward " \t")
+        (indent-to indent)))))
 
 ;; syntax table
 (defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
