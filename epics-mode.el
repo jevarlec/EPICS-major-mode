@@ -28,11 +28,17 @@
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.db\\|.template\\|.dbd\\'" . epics-mode))
 
+;; epics group for customization variables and variables themself
+(defgroup epics-config nil "Customization variables for EPICS mode")
+
+(defcustom epics-indent-spaces 4
+  "Setting for desired number of spaces per brace depth. Default is 4."
+  :group 'epics-config)
+
 ;; define custom faces
 (defface epics-mode-face-shadow
   '((t :inherit shadow))
-  "Face name to be used for records and fields"
-  :group 'epics-mode)
+  "Face name to be used for records and fields")
 
 ;; syntax highlighting
 (setq epics-font-lock-keywords
@@ -73,8 +79,8 @@
       (save-excursion
         (back-to-indentation)
         (let* ((depth (car (syntax-ppss)))
-               (base (* 4 depth)))
-          (unless (= depth 0)
+               (base (* epics-indent-spaces depth)))
+          (unless (zerop depth)
             (setq indent base)
             (when (looking-at "\\s)")
               (setq indent (- base 4))))))
