@@ -4,7 +4,7 @@
 
 ;; Author: Jernej Varlec <jernej@varlec.si>
 ;; Keywords: elisp, epics
-;; Version: 0.4.1
+;; Version: 0.4.2
 
 ;; This file is not part of GNU Emacs.
 
@@ -68,6 +68,58 @@
           ;; define regex for macro highlighting
           (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
 
+;; epics utility functions
+(defvar-local epics-followed-links-history nil)
+
+(defun epics-retrace-link ()
+  "Pop from history the last record a link was followed from and return to it"
+  (interactive)
+  (if (null epics-followed-links-history)
+      (message "No record to return to!")
+    (beginning-of-buffer)
+    (search-forward (car epics-followed-links-history))
+    (setq epics-followed-links-history (cdr epics-followed-links-history))
+    (message "Links followed history: %s" epics-followed-links-history)))
+
+(defun epics-follow-link ()
+  "Try to find a link to a record on the current line and follow it"
+  (interactive)
+
+  (defun epics--copy-string-at-hook (hook)
+    (let (p1 p2 string)
+      (save-excursion
+        (beginning-of-line)
+        (skip-chars-forward " \t")
+        (if (not (equalp (current-word) hook))
+            nil
+          (skip-chars-forward "^\"\n")
+          (forward-char)
+          (setq p1 (point))
+          (skip-chars-forward "^\" .\n")
+          (when (equalp (following-char) "\"")
+            (backward-char))
+          (setq p2 (point))
+          (save-excursion
+            (beginning-of-buffer)
+            (setq string (buffer-substring-no-properties p1 p2)))
+          string))))
+
+  (defun epics--get-parent-record-name ()
+    (save-excursion
+      (search-backward "record")
+      (epics--copy-string-at-hook "record")))
+
+  (let ((link (epics--copy-string-at-hook "field"))
+        (pos nil))
+    (save-excursion
+      (beginning-of-buffer)
+      (setq pos (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" link) nil t)))
+    (if (null pos)
+        (message "Not a link or record not found.")
+      (unless (equalp (car epics-followed-links-history) (epics--get-parent-record-name))
+        (setq epics-followed-links-history (cons (epics--get-parent-record-name) epics-followed-links-history)))
+      (goto-char pos)
+      (message "Following %s" link))))
 
 ;; indentation function
 (defun epics-indent-line ()
@@ -111,6 +163,12 @@
 (defun epics-inside-comment-string-p ()
   "Return non-nil if inside comment or string"
   (or (nth 3 (syntax-ppss)) (nth 4 (syntax-ppss))))
+
+(defvar epics-mode-map nil "Keymap for epics-mode")
+(progn
+  (setq epics-mode-map (make-sparse-keymap))
+  (define-key epics-mode-map (kbd "C-c ]") 'epics-follow-link)
+  (define-key epics-mode-map (kbd "C-c [") 'epics-retrace-link))
 
 (define-derived-mode epics-mode prog-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
