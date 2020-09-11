@@ -8,11 +8,11 @@ Version: 0.4.2
 
 Until a release on MELPA, you have to manually evaluate:
 1. open *epics-mode.el* in emacs and run `M-x eval-buffer`.
-2. opening a .dbd, .db or .template file will autoload epics-mode
+2. opening a .dbd, .db or .template file will autoload epics-mode.
 
-You can modify settings by using Emacs customization interface (`M-x Customize`)
+You can modify settings by using Emacs customization interface (`M-x Customize`).
 
 ## Keymaps
 
-* 'C-c ]' will search for a link on the current line and attempt to follow it
-* 'C-c [' will retrace the last followed link
+* `C-c C-'` - epics-follow-link: Search for a link on the current line and attempt to follow it
+* `C-c C-;` - epics-retrace-link: Retrace the last followed link

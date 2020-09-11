@@ -167,8 +167,8 @@
 (defvar epics-mode-map nil "Keymap for epics-mode")
 (progn
   (setq epics-mode-map (make-sparse-keymap))
-  (define-key epics-mode-map (kbd "C-c ]") 'epics-follow-link)
-  (define-key epics-mode-map (kbd "C-c [") 'epics-retrace-link))
+  (define-key epics-mode-map (kbd "C-c C-'") 'epics-follow-link)
+  (define-key epics-mode-map (kbd "C-c C-;") 'epics-retrace-link))
 
 (define-derived-mode epics-mode prog-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
