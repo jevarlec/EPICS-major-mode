@@ -77,7 +77,7 @@
   (if (null epics-followed-links-history)
       (message "No record to return to!")
     (beginning-of-buffer)
-    (search-forward (car epics-followed-links-history))
+    (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" (car epics-followed-links-history)) nil t)
     (setq epics-followed-links-history (cdr epics-followed-links-history))
     (message "Links followed history: %s" epics-followed-links-history)))
 
