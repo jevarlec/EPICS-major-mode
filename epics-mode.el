@@ -90,13 +90,13 @@
       (save-excursion
         (beginning-of-line)
         (skip-chars-forward " \t")
-        (if (not (equalp (current-word) hook))
+        (if (not (equal (current-word) hook))
             nil
           (skip-chars-forward "^\"\n")
           (forward-char)
           (setq p1 (point))
           (skip-chars-forward "^\" .\n")
-          (when (equalp (following-char) "\"")
+          (when (equal (following-char) "\"")
             (backward-char))
           (setq p2 (point))
           (save-excursion
@@ -116,7 +116,7 @@
       (setq pos (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" link) nil t)))
     (if (null pos)
         (message "Not a link or record not found.")
-      (unless (equalp (car epics-followed-links-history) (epics--get-parent-record-name))
+      (unless (equal (car epics-followed-links-history) (epics--get-parent-record-name))
         (setq epics-followed-links-history (cons (epics--get-parent-record-name) epics-followed-links-history)))
       (goto-char pos)
       (message "Following %s" link))))

@@ -1,4 +1,8 @@
 # Changelog - EPICS Major Mode for Emacs
+## [unreleased]
+### Changed
+- Change CL "equalp" predicate with elisp "equal"
+
 ## [0.4.2] - 2020.09.10
 ### Added
 - Functions for following links
