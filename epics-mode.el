@@ -35,6 +35,10 @@
   "Setting for desired number of spaces per brace depth. Default is 4."
   :group 'epics-config)
 
+(defcustom epics-record-reference-url "https://epics.anl.gov/base/R7-0/4-docs/"
+  "Desired url pointing to the record reference manual page"
+  :group 'epics-config)
+
 ;; define custom faces
 (defface epics-mode-face-shadow
   '((t :inherit shadow))
@@ -67,6 +71,25 @@
 
           ;; define regex for macro highlighting
           (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
+
+(defun epics-debug ()
+  ""
+  (interactive)
+  (let ((buf-name "EPICS - record reference")
+        (dom nil))
+    (with-output-to-temp-buffer buf-name
+      (switch-to-buffer-other-window buf-name)
+      (princ "TEMP\n")
+      (princ "TEMP\n")
+      (princ "TEMP\n")
+      (princ "-------------------------------------------------------------")
+      (with-temp-buffer
+          (insert-file-contents "/opt/epics/base/html/printfRecord.html")
+        (goto-char (point-min))
+        (re-search-forward "^$")
+        (delete-region (point) (point-min))
+        (setq dom (libxml-parse-html-region (point-min) (point-max) nil t)))
+      (shr-insert-document dom))))
 
 ;; epics utility functions
 (defvar-local epics-followed-links-history nil)
