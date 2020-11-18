@@ -35,7 +35,7 @@
   "Setting for desired number of spaces per brace depth. Default is 4."
   :group 'epics-config)
 
-(defcustom epics-record-reference-url "https://epics.anl.gov/base/R7-0/4-docs/"
+(defcustom epics-path-to-base "/opt/epics/base/"
   "Desired url pointing to the record reference manual page"
   :group 'epics-config)
 
@@ -84,7 +84,7 @@
       (princ "TEMP\n")
       (princ "-------------------------------------------------------------")
       (with-temp-buffer
-          (insert-file-contents "/opt/epics/base/html/printfRecord.html")
+          (insert-file-contents (concat epics-path-to-base "/html/printfRecord.html"))
         (goto-char (point-min))
         (re-search-forward "^$")
         (delete-region (point) (point-min))
