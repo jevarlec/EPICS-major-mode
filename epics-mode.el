@@ -72,25 +72,6 @@
           ;; define regex for macro highlighting
           (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
 
-(defun epics-debug ()
-  ""
-  (interactive)
-  (let ((buf-name "EPICS - record reference")
-        (dom nil))
-    (with-output-to-temp-buffer buf-name
-      (switch-to-buffer-other-window buf-name)
-      (princ "TEMP\n")
-      (princ "TEMP\n")
-      (princ "TEMP\n")
-      (princ "-------------------------------------------------------------")
-      (with-temp-buffer
-          (insert-file-contents (concat epics-path-to-base "/html/printfRecord.html"))
-        (goto-char (point-min))
-        (re-search-forward "^$")
-        (delete-region (point) (point-min))
-        (setq dom (libxml-parse-html-region (point-min) (point-max) nil t)))
-      (shr-insert-document dom))))
-
 ;; epics utility functions
 (defvar-local epics-followed-links-history nil)
 
@@ -114,6 +95,45 @@ All inputs should be strings, returns the thing or nil if no match."
           (beginning-of-buffer)
           (setq string (buffer-substring-no-properties p1 p2)))
         string))))
+
+(defun epics-describe-record ()
+  "Find the record name on the current line, find the associated reference page and
+display it in a help buffer. Return t if successfull, nil if not."
+  (interactive)
+  (let ((buf-name "EPICS - record reference")
+        (help-file nil)
+        (record nil)
+        (dom nil))
+    (setq record (epics--copy-thing-at-hook "record"
+                                            "("
+                                            ","))
+    (if (null record)
+        (progn
+          (message "No record found!")
+          nil)
+      (with-output-to-temp-buffer buf-name
+        (setq help-file (concat epics-path-to-base
+                                "html/"
+                                record
+                                "Record.html"))
+        (switch-to-buffer-other-window buf-name)
+          (if (file-readable-p help-file)
+              (progn
+                (with-temp-buffer
+                  (insert-file-contents help-file)
+                  (goto-char (point-min))
+                  (re-search-forward "^$")
+                  (delete-region (point) (point-min))
+                  (setq dom (libxml-parse-html-region
+                             (point-min)
+                             (point-max))))
+                (if (null dom)
+                    (message "Error parsing document: %s" help-file)
+                  (message "Opening %s record reference" record)
+                  (shr-insert-document dom)
+                  t))
+            (message "Cannot access file %s" help-file)
+            nil)))))
 
 (defun epics-retrace-link ()
   "Pop from history the last record a link was followed from and return to it"
@@ -193,7 +213,8 @@ All inputs should be strings, returns the thing or nil if no match."
 (progn
   (setq epics-mode-map (make-sparse-keymap))
   (define-key epics-mode-map (kbd "C-c C-'") 'epics-follow-link)
-  (define-key epics-mode-map (kbd "C-c C-;") 'epics-retrace-link))
+  (define-key epics-mode-map (kbd "C-c C-;") 'epics-retrace-link)
+  (define-key epics-mode-map (kbd "C-c r") 'epics-describe-record))
 
 (define-derived-mode epics-mode prog-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
