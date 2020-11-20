@@ -141,7 +141,9 @@ display it in a help buffer. Return t if successfull, nil if not."
   (if (null epics-followed-links-history)
       (message "No record to return to!")
     (beginning-of-buffer)
-    (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" (car epics-followed-links-history)) nil t)
+    (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" (car epics-followed-links-history))
+                           nil
+                           t)
     (setq epics-followed-links-history (cdr epics-followed-links-history))
     (message "Links followed history: %s" epics-followed-links-history)))
 
@@ -152,17 +154,25 @@ display it in a help buffer. Return t if successfull, nil if not."
   (defun epics--get-parent-record-name ()
     (save-excursion
       (search-backward "record")
-      (epics--copy-thing-at-hook "record" "\"" "\"")))
+      (epics--copy-thing-at-hook "record"
+                                 "\""
+                                 "\"")))
 
-  (let ((link (epics--copy-thing-at-hook "field" "\"" "\""))
+  (let ((link (epics--copy-thing-at-hook "field"
+                                         "\""
+                                         "\""))
         (pos nil))
     (save-excursion
       (beginning-of-buffer)
-      (setq pos (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" link) nil t)))
+      (setq pos (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" link)
+                                       nil
+                                       t)))
     (if (null pos)
         (message "Not a link or record not found.")
-      (unless (equal (car epics-followed-links-history) (epics--get-parent-record-name))
-        (setq epics-followed-links-history (cons (epics--get-parent-record-name) epics-followed-links-history)))
+      (unless (equal (car epics-followed-links-history)
+                     (epics--get-parent-record-name))
+        (setq epics-followed-links-history (cons (epics--get-parent-record-name)
+                                                 epics-followed-links-history)))
       (goto-char pos)
       (message "Following %s" link))))
 
