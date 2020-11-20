@@ -36,7 +36,7 @@
   :group 'epics-config)
 
 (defcustom epics-path-to-base "/opt/epics/base/"
-  "Desired url pointing to the record reference manual page"
+  "Path where EPICS base is installed."
   :group 'epics-config)
 
 ;; define custom faces
