@@ -94,6 +94,27 @@
 ;; epics utility functions
 (defvar-local epics-followed-links-history nil)
 
+(defun epics--copy-thing-at-hook (hook del1 del2)
+  "Yanks a thing located between DEL1 and DEL2, forward of HOOK.
+All inputs should be strings, returns the thing or nil if no match."
+  (let (p1 p2 string)
+    (save-excursion
+      (beginning-of-line)
+      (skip-chars-forward " \t")
+      (if (not (equal (current-word) hook))
+          nil
+        (skip-chars-forward (concat "^" del1 "\n"))
+        (forward-char)
+        (setq p1 (point))
+        (skip-chars-forward (concat "^" del2 " .\n"))
+        (when (equal (following-char) "\"")
+          (backward-char))
+        (setq p2 (point))
+        (save-excursion
+          (beginning-of-buffer)
+          (setq string (buffer-substring-no-properties p1 p2)))
+        string))))
+
 (defun epics-retrace-link ()
   "Pop from history the last record a link was followed from and return to it"
   (interactive)
@@ -108,31 +129,12 @@
   "Try to find a link to a record on the current line and follow it"
   (interactive)
 
-  (defun epics--copy-string-at-hook (hook)
-    (let (p1 p2 string)
-      (save-excursion
-        (beginning-of-line)
-        (skip-chars-forward " \t")
-        (if (not (equal (current-word) hook))
-            nil
-          (skip-chars-forward "^\"\n")
-          (forward-char)
-          (setq p1 (point))
-          (skip-chars-forward "^\" .\n")
-          (when (equal (following-char) "\"")
-            (backward-char))
-          (setq p2 (point))
-          (save-excursion
-            (beginning-of-buffer)
-            (setq string (buffer-substring-no-properties p1 p2)))
-          string))))
-
   (defun epics--get-parent-record-name ()
     (save-excursion
       (search-backward "record")
-      (epics--copy-string-at-hook "record")))
+      (epics--copy-thing-at-hook "record" "\"" "\"")))
 
-  (let ((link (epics--copy-string-at-hook "field"))
+  (let ((link (epics--copy-thing-at-hook "field" "\"" "\""))
         (pos nil))
     (save-excursion
       (beginning-of-buffer)
