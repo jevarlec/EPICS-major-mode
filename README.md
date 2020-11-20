@@ -16,4 +16,5 @@ You can modify settings by using Emacs customization interface (`M-x Customize`)
 
 * `C-c C-'` - epics-follow-link: Search for a link on the current line and attempt to follow it
 * `C-c C-;` - epics-retrace-link: Retrace the last followed link
-* `C-c r` - epics-describe-record: Display record reference
+* `C-c r` - epics-describe-record: Find record type under cursor and display record reference
+* `C-c C-r` - epics-describe-record-prompt: Prompt for record type and display record reference

@@ -1,8 +1,9 @@
 # Changelog - EPICS Major Mode for Emacs
 ## [unreleased]
 ### Added
-- epics-path-to-base variable 
+- epics-path-to-base variable
 - epics-describe-record opens a corresponding reference in a help buffer
+- epics-describe-record-prompt prompts for a record type before opening a record reference
 ### Changed
 - Change CL "equalp" predicate with elisp "equal"
 
