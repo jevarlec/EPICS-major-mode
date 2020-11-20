@@ -222,9 +222,9 @@ display it in a help buffer. Return t if successfull, nil if not."
 (defvar epics-mode-map nil "Keymap for epics-mode")
 (progn
   (setq epics-mode-map (make-sparse-keymap))
-  (define-key epics-mode-map (kbd "C-c C-'") 'epics-follow-link)
-  (define-key epics-mode-map (kbd "C-c C-;") 'epics-retrace-link)
-  (define-key epics-mode-map (kbd "C-c r") 'epics-describe-record))
+  (define-key epics-mode-map (kbd "C-c C-'") #'epics-follow-link)
+  (define-key epics-mode-map (kbd "C-c C-;") #'epics-retrace-link)
+  (define-key epics-mode-map (kbd "C-c r") #'epics-describe-record))
 
 (define-derived-mode epics-mode prog-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
@@ -237,7 +237,7 @@ display it in a help buffer. Return t if successfull, nil if not."
   (setq-local comment-end "")
 
   ;; epics indentation function
-  (setq-local indent-line-function 'epics-indent-line))
+  (setq-local indent-line-function #'epics-indent-line))
 
 (provide 'epics-mode)
 
