@@ -75,7 +75,7 @@
 ;; epics utility functions
 (defvar-local epics-followed-links-history nil)
 
-(defun epics--copy-thing-at-hook (hook del1 del2)
+(defun epics--copy-word-at-hook (hook del1 del2)
   "Yanks a thing located between DEL1 and DEL2, forward of HOOK.
 All inputs should be strings, returns the thing or nil if no match."
   (let (p1 p2 string)
@@ -109,7 +109,7 @@ display it in a help buffer. Return t if successful, nil if not."
         (skip-chars-forward " \t")
         (unless (equal (current-word) "record")
           (search-backward "record"))
-        (setq record (epics--copy-thing-at-hook "record"
+        (setq record (epics--copy-word-at-hook "record"
                                                 "("
                                                 ",")))
       (when (or (null record)
@@ -169,11 +169,11 @@ display it in a help buffer. Return t if successful, nil if not."
   (defun epics--get-parent-record-name ()
     (save-excursion
       (search-backward "record")
-      (epics--copy-thing-at-hook "record"
+      (epics--copy-word-at-hook "record"
                                  "\""
                                  "\"")))
 
-  (let ((link (epics--copy-thing-at-hook "field"
+  (let ((link (epics--copy-word-at-hook "field"
                                          "\""
                                          "\""))
         (pos nil))
