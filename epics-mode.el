@@ -104,19 +104,24 @@ display it in a help buffer. Return t if successfull, nil if not."
         (help-file nil)
         (record nil)
         (dom nil))
-    (setq record (epics--copy-thing-at-hook "record"
-                                            "("
-                                            ","))
-    (if (null record)
-        (progn
-          (message "No record found!")
-          nil)
-      (with-output-to-temp-buffer buf-name
-        (setq help-file (concat epics-path-to-base
-                                "html/"
-                                record
-                                "Record.html"))
-        (switch-to-buffer-other-window buf-name)
+    (save-excursion
+      (beginning-of-line)
+      (skip-chars-forward " \t")
+      (unless (equal (current-word) "record")
+        (search-backward "record"))
+      (setq record (epics--copy-thing-at-hook "record"
+                                              "("
+                                              ","))
+      (if (null record)
+          (progn
+            (message "No record found!")
+            nil)
+        (with-output-to-temp-buffer buf-name
+          (setq help-file (concat epics-path-to-base
+                                  "html/"
+                                  record
+                                  "Record.html"))
+          (switch-to-buffer-other-window buf-name)
           (if (file-readable-p help-file)
               (progn
                 (with-temp-buffer
@@ -133,7 +138,7 @@ display it in a help buffer. Return t if successfull, nil if not."
                   (shr-insert-document dom)
                   t))
             (message "Cannot access file %s" help-file)
-            nil)))))
+            nil))))))
 
 (defun epics-retrace-link ()
   "Pop from history the last record a link was followed from and return to it"
