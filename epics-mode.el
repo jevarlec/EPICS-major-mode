@@ -35,14 +35,18 @@
   "Setting for desired number of spaces per brace depth. Default is 4."
   :group 'epics-config)
 
-(defcustom epics-path-to-base "/opt/epics/base/"
-  "Path where EPICS base is installed."
+(defcustom epics-path-to-base "env"
+  "Path where EPICS base is installed.
+If set to 'env', then epics-mode will try to get path from
+environment variables.
+
+Default is 'env'."
   :group 'epics-config)
 
 ;; define custom faces
 (defface epics-mode-face-shadow
   '((t :inherit shadow))
-  "Face name to be used for records and fields")
+  "Face name to be used for records and fields.")
 
 ;; syntax highlighting
 (setq epics-font-lock-keywords
@@ -74,6 +78,26 @@
 
 ;; epics utility functions
 (defvar-local epics-followed-links-history nil)
+
+(defvar-local epics-base-install-dir nil
+  "Internal var that holds path to epics base.
+This is the variable that is actually used internally,
+not epics-path-to-base.")
+
+
+(defun epics--get-base-dir-string ()
+  "Return validated base dir string for use in other functions."
+
+  (let ((path
+         (if (equal epics-path-to-base "env")
+             (getenv "EPICS_BASE")
+           epics-path-to-base)))
+
+    (if (string-suffix-p "/" path)
+        path
+      (concat path "/"))))
+  
+
 
 (defun epics--copy-word-at-hook (hook del1 del2)
   "Yanks a thing located between DEL1 and DEL2, forward of HOOK.
@@ -115,7 +139,7 @@ display it in a help buffer. Return t if successful, nil if not."
       (when (or (null record)
                 (not (null prompt)))
         (setq record (read-string "Enter record to describe: ")))
-      (setq help-file (concat epics-path-to-base
+      (setq help-file (concat epics-base-install-dir
                               "html/"
                               record
                               "Record.html"))
@@ -245,6 +269,10 @@ display it in a help buffer. Return t if successful, nil if not."
 (define-derived-mode epics-mode prog-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
 
+  ;; initial setup
+  (kill-all-local-variables)
+  (setq-local epics-base-install-dir (epics--get-base-dir-string))
+
   ;; enable syntax highlighting
   (setq font-lock-defaults '((epics-font-lock-keywords)))
 
@@ -254,6 +282,7 @@ display it in a help buffer. Return t if successful, nil if not."
 
   ;; epics indentation function
   (setq-local indent-line-function #'epics-indent-line))
+
 
 (provide 'epics-mode)
 
