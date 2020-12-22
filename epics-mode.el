@@ -96,13 +96,14 @@ not epics-path-to-base.")
     (if (string-suffix-p "/" path)
         path
       (concat path "/"))))
-  
 
 
 (defun epics--copy-word-at-hook (hook del1 del2)
   "Yanks a thing located between DEL1 and DEL2, forward of HOOK.
 All inputs should be strings, returns the thing or nil if no match."
+
   (let (p1 p2 string)
+
     (save-excursion
       (beginning-of-line)
       (skip-chars-forward " \t")
@@ -120,13 +121,16 @@ All inputs should be strings, returns the thing or nil if no match."
           (setq string (buffer-substring-no-properties p1 p2)))
         string))))
 
+
 (defun epics--get-record-ref (prompt)
   "Find the record name on the current line, find the associated reference page and
 display it in a help buffer. Return t if successful, nil if not."
+
   (let ((buf-name "EPICS - Record reference")
         (help-file nil)
         (record nil)
         (dom nil))
+
     (save-excursion
       (when (null prompt)
         (beginning-of-line)
@@ -162,20 +166,26 @@ display it in a help buffer. Return t if successful, nil if not."
         (message "Cannot access file %s" help-file)
         nil))))
 
+
 (defun epics-describe-record ()
   "Find the record name on the current line, find the associated reference page and
 display it in a help buffer. Return t if successful, nil if not."
+
   (interactive)
   (epics--get-record-ref nil))
+
 
 (defun epics-describe-record-prompt ()
   "Prompt for record name, find the associated reference page and
 display it in a help buffer. Return t if successful, nil if not."
+
   (interactive)
   (epics--get-record-ref t))
 
+
 (defun epics-retrace-link ()
   "Pop from history the last record a link was followed from and return to it"
+
   (interactive)
   (if (null epics-followed-links-history)
       (message "No record to return to!")
@@ -186,8 +196,10 @@ display it in a help buffer. Return t if successful, nil if not."
     (setq epics-followed-links-history (cdr epics-followed-links-history))
     (message "Links followed history: %s" epics-followed-links-history)))
 
+
 (defun epics-follow-link ()
   "Try to find a link to a record on the current line and follow it"
+
   (interactive)
 
   (defun epics--get-parent-record-name ()
@@ -197,10 +209,12 @@ display it in a help buffer. Return t if successful, nil if not."
                                  "\""
                                  "\"")))
 
+
   (let ((link (epics--copy-word-at-hook "field"
                                          "\""
                                          "\""))
         (pos nil))
+
     (save-excursion
       (beginning-of-buffer)
       (setq pos (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" link)
@@ -215,13 +229,16 @@ display it in a help buffer. Return t if successful, nil if not."
       (goto-char pos)
       (message "Following %s" link))))
 
+
 ;; indentation function
 (defun epics-indent-line ()
   "Indent the line based on brace depth"
 
   (defun epics-calc-indent ()
     "Calculate the depth of indentation for the current line"
+
     (let (indent)
+
       (save-excursion
         (back-to-indentation)
         (let* ((depth (car (syntax-ppss)))
@@ -232,7 +249,9 @@ display it in a help buffer. Return t if successful, nil if not."
               (setq indent (- base 4))))))
       indent))
 
+
   (let ((indent (epics-calc-indent)))
+
     (unless (or (null indent)
                 (zerop indent))
       (unless (= indent (current-column))
@@ -240,6 +259,7 @@ display it in a help buffer. Return t if successful, nil if not."
         (delete-horizontal-space)
         (skip-chars-forward " \t")
         (indent-to indent)))))
+
 
 ;; syntax table
 (defvar epics-mode-syntax-table nil "Syntax table for 'epics-mode'.")
@@ -254,9 +274,12 @@ display it in a help buffer. Return t if successful, nil if not."
 
         synTable))
 
+
 (defun epics-inside-comment-string-p ()
   "Return non-nil if inside comment or string"
+
   (or (nth 3 (syntax-ppss)) (nth 4 (syntax-ppss))))
+
 
 (defvar epics-mode-map nil "Keymap for epics-mode")
 (progn
@@ -265,6 +288,7 @@ display it in a help buffer. Return t if successful, nil if not."
   (define-key epics-mode-map (kbd "C-c C-;") #'epics-retrace-link)
   (define-key epics-mode-map (kbd "C-c r") #'epics-describe-record)
   (define-key epics-mode-map (kbd "C-c C-r") #'epics-describe-record-prompt))
+
 
 (define-derived-mode epics-mode prog-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
