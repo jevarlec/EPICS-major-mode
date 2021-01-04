@@ -294,7 +294,6 @@ display it in a help buffer. Return t if successful, nil if not."
   "Major mode for editing EPICS .db and .template files."
 
   ;; initial setup
-  (kill-all-local-variables)
   (setq-local epics-base-install-dir (epics--get-base-dir-string))
 
   ;; enable syntax highlighting
