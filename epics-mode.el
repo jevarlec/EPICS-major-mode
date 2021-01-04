@@ -297,7 +297,7 @@ display it in a help buffer. Return t if successful, nil if not."
   (setq-local epics-base-install-dir (epics--get-base-dir-string))
 
   ;; enable syntax highlighting
-  (setq font-lock-defaults '((epics-font-lock-keywords)))
+  (setq-local font-lock-defaults '((epics-font-lock-keywords)))
 
   ;; comment-dwim functionality
   (setq-local comment-start "# ")
