@@ -79,7 +79,7 @@ Default is 'env'."
 ;; epics utility functions
 (defvar-local epics-followed-links-history nil)
 
-(defvar-local epics-actual-base-dir nil
+(defvar-local epics--actual-base-dir nil
   "Internal var that holds path to epics base.
 This is the variable that is actually used internally,
 not epics-path-to-base.")
@@ -87,7 +87,7 @@ not epics-path-to-base.")
 
 (defun epics--debug ()
   (interactive)
-  (message "%s" (epics--get-parent-record-name-maybe)))
+  (message "%s" (epics--get-parent-record-thing-maybe)))
 
 
 (defun epics--blank-line-p ()
@@ -176,48 +176,21 @@ FILE is a string"
       nil)))
 
 
-(defun epics--open-help ()
+(defun epics-open-help ()
   ""
 
-  (let ((buf-name "EPICS - Record reference")
-        (help-file nil)
-        (record nil)
-        (dom nil))
+  (interactive)
+  (let* ((help-dir (concat epics--actual-base-dir "html/"))
+         (choice-list (epics--get-filenames-in-dir help-dir))
+         (choice (ido-completing-read "Choose reference to read:" choice-list)))
+    (epics--render-help-file (concat help-dir choice))))
 
-    (save-excursion
-      (when (null prompt)
-        (beginning-of-line)
-        (skip-chars-forward " \t")
-        (unless (equal (current-word) "record")
-          (search-backward "record"))
-        (setq record (epics--copy-word-at-hook "record"
-                                                "("
-                                                ",")))
-      (when (or (null record)
-                (not (null prompt)))
-        (setq record (read-string "Enter record to describe: ")))
-      (setq help-file (concat epics-actual-base-dir
-                              "html/"
-                              record
-                              "Record.html"))
-      (if (file-readable-p help-file)
-          (with-output-to-temp-buffer buf-name
-            (switch-to-buffer-other-window buf-name)
-            (with-temp-buffer
-              (insert-file-contents help-file)
-              (goto-char (point-min))
-              (re-search-forward "^$")
-              (delete-region (point) (point-min))
-              (setq dom (libxml-parse-html-region
-                         (point-min)
-                         (point-max))))
-            (if (null dom)
-                (message "Error parsing document: %s" help-file)
-              (message "Opening %s record reference" record)
-              (shr-insert-document dom)
-              t))
-        (message "Cannot access file %s" help-file)
-        nil))))
+
+(defun epics-get-filenames-in-dir (dir)
+  ""
+
+  (directory-files dir nil "[A-Za-z0-9-_]*\.html"))
+
 
 
 (defun epics-describe-record ()
@@ -228,7 +201,7 @@ display it in a help buffer. Return t if successful, nil if not."
   (let ((record (epics--get-parent-record-thing-maybe "(" ",")))
     (if (null record)
         (message "Point not in record!")
-      (epics--render-help-file (concat epics-actual-base-dir
+      (epics--render-help-file (concat epics--actual-base-dir
                                        "html/"
                                        record
                                        "Record.html")))))
@@ -356,7 +329,7 @@ if point inside record block, nil if not."
   "Major mode for editing EPICS .db and .template files."
 
   ;; initial setup
-  (setq-local epics-actual-base-dir (epics--get-base-dir-string))
+  (setq-local epics--actual-base-dir (epics--get-base-dir-string))
 
   ;; enable syntax highlighting
   (setq-local font-lock-defaults '((epics-font-lock-keywords)))
