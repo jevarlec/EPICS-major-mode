@@ -150,9 +150,34 @@ All inputs should be strings, returns the thing or nil if no match."
         string))))
 
 
-(defun epics--get-record-ref (&optional prompt)
-  "Find the record name on the current line, find the associated reference page and
-display it in a help buffer. Return t if successful, nil if not."
+(defun epics--render-help-file (file)
+  "Open the help FILE if possible.
+FILE is a string"
+
+  (let ((buf-name "EPICS Reference")
+        (dom))
+
+    (if (file-readable-p file)
+        (progn
+          (with-temp-buffer
+            (insert-file-contents file)
+            (beginning-of-buffer)
+            (re-search-forward "^$")
+            (setq dom (libxml-parse-html-region
+                       (point)
+                       (point-max))))
+          (with-output-to-temp-buffer buf-name
+            (switch-to-buffer-other-window buf-name)
+            (if (null dom)
+                (message "Error parsing document: %s" file)
+              (shr-insert-document dom)
+              t)))
+      (message "Cannot access file %s" file)
+      nil)))
+
+
+(defun epics--open-help ()
+  ""
 
   (let ((buf-name "EPICS - Record reference")
         (help-file nil)
@@ -200,7 +225,13 @@ display it in a help buffer. Return t if successful, nil if not."
 display it in a help buffer. Return t if successful, nil if not."
 
   (interactive)
-  (epics--get-record-ref nil))
+  (let ((record (epics--get-parent-record-thing-maybe "(" ",")))
+    (if (null record)
+        (message "Point not in record!")
+      (epics--render-help-file (concat epics-actual-base-dir
+                                       "html/"
+                                       record
+                                       "Record.html")))))
 
 
 (defun epics-describe-record-prompt ()
@@ -225,15 +256,15 @@ display it in a help buffer. Return t if successful, nil if not."
     (message "Links followed history: %s" epics-followed-links-history)))
 
 
-(defun epics--get-parent-record-name-maybe ()
-  "Return string containing record name
+(defun epics--get-parent-record-thing-maybe (del1 del2)
+  "Return string between DEL1 and DEL2 pertaining to the record
 if point inside record block, nil if not."
 
   (save-excursion
     (beginning-of-line)
     (unless (epics--blank-line-p)
       (skip-chars-forward " \t")
-      (cond ((epics--string-on-line-p "record") (epics--copy-word-at-hook "record" "\"" "\""))
+      (cond ((epics--string-on-line-p "record") (epics--copy-word-at-hook "record" del1 del2))
             ((cl-some #'epics--string-on-line-p '("}" "field" "path" "addpath"
                                                   "include" "menu" "choice"
                                                   "recordtype" "device" "driver"
@@ -241,7 +272,7 @@ if point inside record block, nil if not."
                                                   "variable" "breaktable"
                                                   "grecord" "info" "alias"))
              (search-backward "record")
-             (epics--copy-word-at-hook "record" "\"" "\""))
+             (epics--copy-word-at-hook "record" del1 del2))
             (t nil)))))
 
 
@@ -260,8 +291,8 @@ if point inside record block, nil if not."
     (if (null pos)
         (message "Not a link or record not found.")
       (unless (equal (car epics-followed-links-history)
-                     (epics--get-parent-record-name-maybe))
-        (setq epics-followed-links-history (cons (epics--get-parent-record-name-maybe)
+                     (epics--get-parent-record-thing-maybe "\"" "\""))
+        (setq epics-followed-links-history (cons (epics--get-parent-record-thing-maybe "\"" "\"")
                                                  epics-followed-links-history)))
       (goto-char pos)
       (message "Following %s" link))))
