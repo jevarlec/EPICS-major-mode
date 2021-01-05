@@ -87,11 +87,16 @@ not epics-path-to-base.")
 
 (defun epics--debug ()
   (interactive)
-  (message "set path to base: %s\nactual path to base: %s" epics-path-to-base epics-actual-base-dir))
+  (message "%s" (epics--get-parent-record-name-maybe)))
 
 
-(defun epics--var-watcher (a1 a2 a3 a4)
-  (setq-local epics-actual-base-dir (epics--get-base-dir-string)))
+(defun epics--blank-line-p ()
+  ""
+
+  (let ((result (string-match-p "^ *$" (thing-at-point 'line t))))
+    (if (= result 0)
+        t
+      nil)))
 
 
 (defun epics--get-base-dir-string ()
@@ -108,6 +113,17 @@ not epics-path-to-base.")
               path
             (concat path "/")))
       (message "Invalid base path set: %s" epics-path-to-base))))
+
+
+(defun epics--string-on-line-p (string)
+  ""
+
+  (save-excursion
+    (skip-chars-forward "\t ")
+    (let ((result (looking-at-p string)))
+      (if (null result)
+          nil
+        t))))
 
 
 (defun epics--copy-word-at-hook (hook del1 del2)
@@ -209,22 +225,31 @@ display it in a help buffer. Return t if successful, nil if not."
     (message "Links followed history: %s" epics-followed-links-history)))
 
 
+(defun epics--get-parent-record-name-maybe ()
+  "Return string containing record name
+if point inside record block, nil if not."
+
+  (save-excursion
+    (beginning-of-line)
+    (unless (epics--blank-line-p)
+      (skip-chars-forward " \t")
+      (cond ((epics--string-on-line-p "record") (epics--copy-word-at-hook "record" "\"" "\""))
+            ((cl-some #'epics--string-on-line-p '("}" "field" "path" "addpath"
+                                                  "include" "menu" "choice"
+                                                  "recordtype" "device" "driver"
+                                                  "registrar" "function"
+                                                  "variable" "breaktable"
+                                                  "grecord" "info" "alias"))
+             (search-backward "record")
+             (epics--copy-word-at-hook "record" "\"" "\""))
+            (t nil)))))
+
+
 (defun epics-follow-link ()
   "Try to find a link to a record on the current line and follow it"
 
   (interactive)
-
-  (defun epics--get-parent-record-name ()
-    (save-excursion
-      (search-backward "record")
-      (epics--copy-word-at-hook "record"
-                                 "\""
-                                 "\"")))
-
-
-  (let ((link (epics--copy-word-at-hook "field"
-                                         "\""
-                                         "\""))
+  (let ((link (epics--copy-word-at-hook "field" "\"" "\""))
         (pos nil))
 
     (save-excursion
@@ -235,8 +260,8 @@ display it in a help buffer. Return t if successful, nil if not."
     (if (null pos)
         (message "Not a link or record not found.")
       (unless (equal (car epics-followed-links-history)
-                     (epics--get-parent-record-name))
-        (setq epics-followed-links-history (cons (epics--get-parent-record-name)
+                     (epics--get-parent-record-name-maybe))
+        (setq epics-followed-links-history (cons (epics--get-parent-record-name-maybe)
                                                  epics-followed-links-history)))
       (goto-char pos)
       (message "Following %s" link))))
@@ -285,12 +310,6 @@ display it in a help buffer. Return t if successful, nil if not."
         (modify-syntax-entry ?\n ">" synTable)
 
         synTable))
-
-
-(defun epics-inside-comment-string-p ()
-  "Return non-nil if inside comment or string"
-
-  (or (nth 3 (syntax-ppss)) (nth 4 (syntax-ppss))))
 
 
 (defvar epics-mode-map nil "Keymap for epics-mode")
