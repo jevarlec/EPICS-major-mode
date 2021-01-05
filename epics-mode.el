@@ -36,7 +36,7 @@
   :group 'epics-config)
 
 (defcustom epics-path-to-base "env"
-  "Path where EPICS base is installed.
+  "Path where EPICS base is installed. Run M-x epics-mode after changing this.
 If set to 'env', then epics-mode will try to get path from
 environment variables.
 
@@ -79,10 +79,19 @@ Default is 'env'."
 ;; epics utility functions
 (defvar-local epics-followed-links-history nil)
 
-(defvar-local epics-base-install-dir nil
+(defvar-local epics-actual-base-dir nil
   "Internal var that holds path to epics base.
 This is the variable that is actually used internally,
 not epics-path-to-base.")
+
+
+(defun epics--debug ()
+  (interactive)
+  (message "set path to base: %s\nactual path to base: %s" epics-path-to-base epics-actual-base-dir))
+
+
+(defun epics--var-watcher (a1 a2 a3 a4)
+  (setq-local epics-actual-base-dir (epics--get-base-dir-string)))
 
 
 (defun epics--get-base-dir-string ()
@@ -93,9 +102,12 @@ not epics-path-to-base.")
              (getenv "EPICS_BASE")
            epics-path-to-base)))
 
-    (if (string-suffix-p "/" path)
-        path
-      (concat path "/"))))
+    (if (file-directory-p path)
+        (progn
+          (if (string-suffix-p "/" path)
+              path
+            (concat path "/")))
+      (message "Invalid base path set: %s" epics-path-to-base))))
 
 
 (defun epics--copy-word-at-hook (hook del1 del2)
@@ -122,7 +134,7 @@ All inputs should be strings, returns the thing or nil if no match."
         string))))
 
 
-(defun epics--get-record-ref (prompt)
+(defun epics--get-record-ref (&optional prompt)
   "Find the record name on the current line, find the associated reference page and
 display it in a help buffer. Return t if successful, nil if not."
 
@@ -143,7 +155,7 @@ display it in a help buffer. Return t if successful, nil if not."
       (when (or (null record)
                 (not (null prompt)))
         (setq record (read-string "Enter record to describe: ")))
-      (setq help-file (concat epics-base-install-dir
+      (setq help-file (concat epics-actual-base-dir
                               "html/"
                               record
                               "Record.html"))
@@ -286,15 +298,15 @@ display it in a help buffer. Return t if successful, nil if not."
   (setq epics-mode-map (make-sparse-keymap))
   (define-key epics-mode-map (kbd "C-c C-'") #'epics-follow-link)
   (define-key epics-mode-map (kbd "C-c C-;") #'epics-retrace-link)
-  (define-key epics-mode-map (kbd "C-c r") #'epics-describe-record)
-  (define-key epics-mode-map (kbd "C-c C-r") #'epics-describe-record-prompt))
+  (define-key epics-mode-map (kbd "C-c h r") #'epics-describe-record)
+  (define-key epics-mode-map (kbd "C-c h h") #'epics-describe-record-prompt))
 
 
 (define-derived-mode epics-mode prog-mode "EPICS"
   "Major mode for editing EPICS .db and .template files."
 
   ;; initial setup
-  (setq-local epics-base-install-dir (epics--get-base-dir-string))
+  (setq-local epics-actual-base-dir (epics--get-base-dir-string))
 
   ;; enable syntax highlighting
   (setq-local font-lock-defaults '((epics-font-lock-keywords)))
