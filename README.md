@@ -4,11 +4,21 @@ Author: Jernej Varlec
 
 Version: 0.5.0
 
-## Installation
+## Installation and Uninstallation
 
-Until a release on MELPA, you have to manually evaluate:
-1. open *epics-mode.el* in emacs and run `M-x eval-buffer`.
-2. opening a .dbd, .db or .template file will autoload epics-mode.
+NOTE: For best experience, use Emacs version >= 27.
+
+Not yet released on (M)ELPA, you have to manually install:
+1. Clone the repo.
+2. Open Emacs and run `M-x package-install-file` and point it to the *epics-mode.el*.
+3. Add the following to your *init.el*: `(require 'epics-mode)`. Reevaluate or restart Emacs.
+4. Opening a .dbd, .db or .template file will autoload epics-mode.
+
+To remove:
+1. Delete/comment the line `(require 'epics-mode)` in your *init.el*.
+2. Run `M-x package-list-packages`. Search for *epics-mode*, put the point on it and press enter.
+3. In the package details buffer, press `delete`.
+4. Delete the cloned repo.
 
 ## Features
 
@@ -28,14 +38,14 @@ Effortlessly access record reference pages by simply pointing at the record and 
 
 ### Assisted Database Navigation
 
-Implemented right now: You can follow the link fields if they point to a record. This provides quick navigation between linked records. For now this feature is limited and cannot navigate between files.
+You can follow the link fields if they point to a record. This provides quick navigation between linked records. For now this feature is limited and cannot navigate between files.
 
 ## Customization
 
 You can modify settings by using Emacs customization interface (`M-x Customize`) and search string "epics". These are the available settings:
 
 * `epics-indent-spaces` - How many spaces should the indentation engine do when indenting. Default value is 4.
-* `epics-path-to-base` - Where the base/ folder is located. If set to "env", then epics-mode will attempt to get the path from environment variable 'EPICS_BASE'. Please note that you have to use double quotes when modifying this setting and that you have to run `M-x epics-mode` after any changes. Default value is "env".
+* `epics-path-to-base` - Where the base/ folder is located. If set to "From environment variable", then epics-mode will attempt to get the path from environment variable 'EPICS_BASE'. Other choice is to provide a directory. Please note that you have to run `M-x epics-mode` after any changes. Default value is "From environment variable".
 
 ## Using the Help Buffer
 

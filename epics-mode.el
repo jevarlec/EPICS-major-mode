@@ -25,15 +25,20 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.db\\|.template\\|.dbd\\'" . epics-mode))
 
 ;; epics group for customization variables and variables themself
-(defgroup epics-config nil "Customization variables for EPICS mode")
+(defgroup epics-config nil
+  "Customization variables for EPICS mode"
+  :group 'editing)
 
 (defcustom epics-indent-spaces 4
   "Setting for desired number of spaces per brace depth. Default is 4."
-  :group 'epics-config)
+  :group 'epics-config
+  :type 'number)
 
 (defcustom epics-path-to-base "env"
   "Path where EPICS base is installed. Run M-x epics-mode after changing this.
@@ -41,7 +46,9 @@ If set to 'env', then epics-mode will try to get path from
 environment variables.
 
 Default is 'env'."
-  :group 'epics-config)
+  :group 'epics-config
+  :type '(choice (const :tag "From environment variables" :value "env")
+                (directory)))
 
 ;; define custom faces
 (defface epics-mode-face-shadow
@@ -49,7 +56,7 @@ Default is 'env'."
   "Face name to be used for records and fields.")
 
 ;; syntax highlighting
-(setq epics-font-lock-keywords
+(defvar-local epics-font-lock-keywords
       (let* (
              ;; define categories of keywords
              (epics-shadow '("record" "field" "path" "addpath" "include" "menu" "choice" "recordtype" "device" "driver" "registrar" "function" "variable" "breaktable" "grecord" "info" "alias"))
@@ -141,7 +148,7 @@ All inputs should be strings, returns the thing or nil if no match."
           (backward-char))
         (setq p2 (point))
         (save-excursion
-          (beginning-of-buffer)
+          (goto-char (point-min))
           (setq string (buffer-substring-no-properties p1 p2)))
         string))))
 
@@ -157,7 +164,7 @@ HTML-FILE is a string containing absolute path to desired html file."
         (progn
           (with-temp-buffer
             (insert-file-contents html-file)
-            (beginning-of-buffer)
+            (goto-char (point-min))
             (re-search-forward "^$")
             (setq dom (libxml-parse-html-region
                        (point)
@@ -209,7 +216,7 @@ Optionally provide a REGEX string to filter files."
   (interactive)
   (if (null epics-followed-links-history)
       (message "No record to return to!")
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" (car epics-followed-links-history))
                            nil
                            t)
@@ -244,7 +251,7 @@ if point inside record block, nil if not."
   (let ((link (epics--copy-string-at-hook "field" "\"" "\""))
         (pos nil))
     (save-excursion
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (setq pos (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" link)
                                        nil
                                        t)))
@@ -259,24 +266,25 @@ if point inside record block, nil if not."
 
 
 ;; indentation function
+(defun epics--calc-indent ()
+  "Calculate the depth of indentation for the current line"
+  
+  (let (indent)
+    (save-excursion
+      (back-to-indentation)
+      (let* ((depth (car (syntax-ppss)))
+             (base (* epics-indent-spaces depth)))
+        (unless (zerop depth)
+          (setq indent base)
+          (when (looking-at "\\s)")
+            (setq indent (- base 4))))))
+    indent))
+
+
 (defun epics-indent-line ()
   "Indent the line based on brace depth"
 
-  (defun epics-calc-indent ()
-    "Calculate the depth of indentation for the current line"
-
-    (let (indent)
-      (save-excursion
-        (back-to-indentation)
-        (let* ((depth (car (syntax-ppss)))
-               (base (* epics-indent-spaces depth)))
-          (unless (zerop depth)
-            (setq indent base)
-            (when (looking-at "\\s)")
-              (setq indent (- base 4))))))
-      indent))
-
-  (let ((indent (epics-calc-indent)))
+  (let ((indent (epics--calc-indent)))
     (unless (or (null indent)
                 (zerop indent))
       (unless (= indent (current-column))
