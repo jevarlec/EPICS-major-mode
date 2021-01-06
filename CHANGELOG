@@ -1,4 +1,14 @@
 # Changelog - EPICS Major Mode for Emacs
+## [0.5.0] - 2021.01.06
+### Added
+- epics-path-to-base customization variable
+- epics-describe-record opens a corresponding reference in a help buffer
+- epics-open-reference prompts for the desired reference
+### Changed
+- Change CL "equalp" predicate with elisp "equal"
+- Refactored and improve many internal functions
+- Finally updated the README
+
 ## [0.4.2] - 2020.09.10
 ### Added
 - Functions for following links
