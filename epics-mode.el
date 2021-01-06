@@ -33,7 +33,7 @@
 ;; epics group for customization variables and variables themself
 (defgroup epics-config nil
   "Customization variables for EPICS mode"
-  :group 'editing)
+  :group 'programming)
 
 (defcustom epics-indent-spaces 4
   "Setting for desired number of spaces per brace depth. Default is 4."
