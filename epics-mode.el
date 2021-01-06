@@ -1,10 +1,10 @@
 ;;; epics-mode.el --- EPICS major mode                     -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020  Jernej Varlec
+;; Copyright (C) 2021  Jernej Varlec
 
 ;; Author: Jernej Varlec <jernej@varlec.si>
 ;; Keywords: elisp, epics
-;; Version: 0.4.2
+;; Version: 0.5.0
 
 ;; This file is not part of GNU Emacs.
 
@@ -76,7 +76,7 @@ Default is 'env'."
           ;; define regex for macro highlighting
           (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
 
-;; epics utility functions
+;; epics utilities
 (defvar-local epics-followed-links-history nil)
 
 (defvar-local epics--actual-base-dir nil
@@ -243,7 +243,6 @@ if point inside record block, nil if not."
   (interactive)
   (let ((link (epics--copy-string-at-hook "field" "\"" "\""))
         (pos nil))
-
     (save-excursion
       (beginning-of-buffer)
       (setq pos (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" link)
@@ -267,7 +266,6 @@ if point inside record block, nil if not."
     "Calculate the depth of indentation for the current line"
 
     (let (indent)
-
       (save-excursion
         (back-to-indentation)
         (let* ((depth (car (syntax-ppss)))
@@ -278,9 +276,7 @@ if point inside record block, nil if not."
               (setq indent (- base 4))))))
       indent))
 
-
   (let ((indent (epics-calc-indent)))
-
     (unless (or (null indent)
                 (zerop indent))
       (unless (= indent (current-column))
