@@ -55,6 +55,11 @@ Default is 'env'."
   '((t :inherit shadow))
   "Face name to be used for records and fields.")
 
+(defface epics-mode-face-link-param
+  '((t :inherit font-lock-constant-face
+       :weight bold))
+  "Bold face for link parameters.")
+
 ;; syntax highlighting
 (defvar-local epics-font-lock-keywords
       (let* (
@@ -71,8 +76,8 @@ Default is 'env'."
         `(
           ;; apply faces to generated regex
           (,epics-shadow-regexp . 'epics-mode-face-shadow)
-          (,epics-link-params-regexp 0 font-lock-constant-face t)
-          (,(format "\"%s\"" epics-keywords-regexp) 1 font-lock-variable-name-face t)
+          (,epics-link-params-regexp 0 'epics-mode-face-link-param t)
+          (,(format "\"%s\"" epics-keywords-regexp) 1 font-lock-keyword-face t)
 
           ;; define regex for asyn i/o parameters
           (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\)[A-Za-z0-9_-]*?\"" 1 font-lock-type-face t)
@@ -81,7 +86,8 @@ Default is 'env'."
           (,"\"\\(@.+?\.proto\\)" 1 font-lock-type-face t)
 
           ;; define regex for macro highlighting
-          (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
+          (,"$(\\([^ ]+?\\))" 0 font-lock-variable-name-face t))))
+
 
 ;; epics utilities
 (defvar-local epics-followed-links-history nil)
