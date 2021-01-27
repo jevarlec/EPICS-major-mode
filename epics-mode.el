@@ -239,12 +239,7 @@ if point inside record block, nil if not."
     (unless (epics--blank-line-p)
       (skip-chars-forward " \t")
       (cond ((epics--string-on-line-p "record") (epics--copy-string-at-hook "record" del1 del2))
-            ((cl-some #'epics--string-on-line-p '("{" "}" "field" "path" "addpath"
-                                                  "include" "menu" "choice"
-                                                  "recordtype" "device" "driver"
-                                                  "registrar" "function"
-                                                  "variable" "breaktable"
-                                                  "grecord" "info" "alias"))
+            ((epics--inside-record-block-p nil)
              (search-backward "record")
              (epics--copy-string-at-hook "record" del1 del2))
             (t nil)))))
@@ -270,6 +265,22 @@ if point inside record block, nil if not."
       (goto-char pos)
       (message "Following %s" link))))
 
+
+(defun epics--inside-record-block-p (&optional include-record)
+  ""
+  (interactive)
+  (let ((string-list '("field" "path" "addpath"
+                       "include" "menu" "choice"
+                       "recordtype" "device" "driver"
+                       "registrar" "function"
+                       "variable" "breaktable"
+                       "grecord" "info" "alias")))
+
+    (when include-record
+      (setq string-list (cons "record" string-list)))
+    (if (cl-some #'epics--string-on-line-p string-list)
+        t
+      nil)))
 
 ;; indentation function
 (defun epics--calc-indent ()
