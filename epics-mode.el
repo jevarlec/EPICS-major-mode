@@ -322,6 +322,31 @@ first line that consists of record type and name."
           (t nil))))
 
 
+(defun epics-next-record ()
+  "Find the next record block and set the point
+to the record type."
+
+  (interactive)
+  (end-of-line)
+  (when (epics--inside-record-block-p)
+    (search-forward "}"))
+  (epics--search-forward "record")
+  (epics--search-forward "("))
+
+
+(defun epics-previous-record ()
+  "Find the previous record block and set the point
+to the record type."
+
+  (interactive)
+  (beginning-of-line)
+  (when (epics--inside-record-block-p)
+    (if (epics--string-on-line-p "record")
+        (previous-line)
+      (epics--search-backward "record")
+      (previous-line)))
+  (epics--search-backward "record")
+  (epics--search-forward "("))
   ""
   (interactive)
 
@@ -396,7 +421,9 @@ first line that consists of record type and name."
   (define-key epics-mode-map (kbd "C-c C-'") #'epics-follow-link)
   (define-key epics-mode-map (kbd "C-c C-;") #'epics-retrace-link)
   (define-key epics-mode-map (kbd "C-c h r") #'epics-describe-record)
-  (define-key epics-mode-map (kbd "C-c h h") #'epics-open-reference))
+  (define-key epics-mode-map (kbd "C-c h h") #'epics-open-reference)
+  (define-key epics-mode-map (kbd "C-c C-l") #'epics-next-record)
+  (define-key epics-mode-map (kbd "C-c C-h") #'epics-previous-record))
 
 
 (define-derived-mode epics-mode prog-mode "EPICS"
