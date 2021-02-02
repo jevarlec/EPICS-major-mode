@@ -308,21 +308,22 @@ if point inside record block, nil if not."
       (message "Following %s" link))))
 
 
-(defun epics--inside-record-block-p (&optional include-record)
+(defun epics--inside-record-block-p (&optional body-only)
+  "Return t if point is inside a record block.
+If BODY-ONLY is set to t, the check will ignore the
+first line that consists of record type and name."
+
+  (catch 'result
+    (unless body-only
+      (when (epics--string-on-line-p "record")
+        (throw 'result t)))
+    (cond ((equal 1 (car (syntax-ppss))) t)
+          ((epics--string-on-line-p "{") t)
+          (t nil))))
+
+
   ""
   (interactive)
-  (let ((string-list '("field" "path" "addpath"
-                       "include" "menu" "choice"
-                       "recordtype" "device" "driver"
-                       "registrar" "function"
-                       "variable" "breaktable"
-                       "grecord" "info" "alias")))
-
-    (when include-record
-      (setq string-list (cons "record" string-list)))
-    (if (cl-some #'epics--string-on-line-p string-list)
-        t
-      nil)))
 
 
 (defun epics--inside-string-p ()
