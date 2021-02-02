@@ -135,6 +135,50 @@ not epics-path-to-base.")
         t))))
 
 
+(defun epics--search-forward (string &optional include-strings include-comments)
+  "Same as `search-forward', except it provides options
+to either INCLUDE-STRINGS or INCLUDE-COMMENTS in the search
+if either is set to t.
+
+By default it does not search the comments or strings."
+
+  (epics--search-with #'search-forward string include-strings include-comments))
+
+
+(defun epics--search-backward (string &optional include-strings include-comments)
+  "Same as `search-backward', except it provides options
+to either INCLUDE-STRINGS or INCLUDE-COMMENTS in the search
+if either is set to t.
+
+By default it does not search the comments or strings."
+
+  (epics--search-with #'search-backward string include-strings include-comments))
+
+
+(defun epics--search-with (search-func string &optional include-strings include-comments)
+  "Use this function with a wrapper! e.g. `epics--search-forward'
+
+Same as desired SEARCH-FUNC, except it provides options
+to either INCLUDE-STRINGS or INCLUDE-COMMENTS in the search
+if either is set to t.
+
+By default it does not search the comments or strings."
+
+  (let ((point-after-search (funcall search-func string nil t nil)))
+
+    (cond ((epics--inside-comment-p)
+           (if include-comments
+               point-after-search
+             nil))
+
+          ((epics--inside-string-p)
+           (if include-strings
+               point-after-search
+             nil))
+
+          (t point-after-search))))
+
+
 (defun epics--copy-string-at-hook (hook del1 del2)
   "Yanks the string located between DEL1 and DEL2, forward of HOOK.
 All inputs should be strings, returns the thing or nil if no match."
