@@ -324,6 +324,28 @@ if point inside record block, nil if not."
         t
       nil)))
 
+
+(defun epics--inside-string-p ()
+  "Return t if point in string."
+  (if (null (nth 3 (syntax-ppss)))
+      nil
+    t))
+
+
+(defun epics--inside-comment-p ()
+  "Return t if point in comment."
+  (if (null (nth 4 (syntax-ppss)))
+      nil
+    t))
+
+
+(defun epics--inside-comment-string-p ()
+  "Return t if point in comment or string."
+  (if (or (epics--inside-comment-p)
+          (epics--inside-string-p))
+      t
+    nil))
+
 ;; indentation function
 (defun epics--calc-indent ()
   "Calculate the depth of indentation for the current line"
