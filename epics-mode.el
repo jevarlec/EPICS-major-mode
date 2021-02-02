@@ -349,12 +349,94 @@ to the record type."
       (previous-line)))
   (epics--search-backward "record")
   (epics--search-forward "("))
-  ""
+
+
+(defun epics--position-point-at-value ()
+  "Try to find position of value on the line inside
+a record block."
+
+  (if (epics--string-on-line-p "\"" t)
+      (epics--search-forward "\"" t)
+
+    (cond ((looking-at-p ",") (forward-char) (epics--position-point-at-value))
+          ((looking-at-p " ")
+           (cond ((looking-back ",") (forward-char) (epics--position-point-at-value))
+                 ((looking-at ")") t)))
+          ((looking-at-p ")") t))))
+
+
+(defun epics--point-at-value-p ()
+  "Check if point is located at the value on the line
+inside a record block.
+
+Using this makes sense only after checking that point
+is inside a record block."
+
+  (if (epics--inside-string-p)
+      t
+    (save-excursion
+      (backward-char 2)
+      (if (looking-at-p ",")
+          t
+        nil))))
+
+(defun epics--point-after-value-p ()
+  "Check if point is located after a value on
+the line inside a record block."
+
   (interactive)
+  (let ((current-pos (point))
+        (after-value-pos nil))
+
+    (save-excursion
+      (beginning-of-line)
+      (epics--search-forward ")")
+      (backward-char)
+      (if (>= current-pos (point))
+          t
+        nil))))
+
+
+(defun epics-next-value ()
+  "Position the point at the next possible value."
+
+  (interactive)
+  (cond ((epics--blank-line-p) (epics--search-forward "record") (epics-next-value))
+        ((epics--inside-string-p) (next-line) (beginning-of-line) (epics-next-value))
+        ((epics--inside-record-block-p)
+         (if (or (epics--point-after-value-p)
+                 (epics--point-at-value-p))
+             (progn
+               (next-line)
+               (beginning-of-line)
+               (epics-next-value))
+           (beginning-of-line)
+           (epics--search-forward ",")
+           (epics--position-point-at-value)))
+        (t (next-line) (epics-next-value))))
+
+
+(defun epics-previous-value ()
+  "Position the point at the previous possible value."
+
+  (interactive)
+  (cond ((epics--blank-line-p) (epics--search-backward "}") (epics-previous-value))
+        ((epics--inside-string-p) (previous-line) (end-of-line) (epics-previous-value))
+        ((epics--inside-record-block-p)
+         (if (epics--in-front-of-value-p)
+             (progn
+               (beginning-of-line)
+               (epics--search-forward ",")
+               (epics--position-point-at-value))
+           (previous-line)
+           (end-of-line)
+           (epics-previous-value)))
+        (t (previous-line) (epics-previous-value))))
 
 
 (defun epics--inside-string-p ()
   "Return t if point in string."
+
   (if (null (nth 3 (syntax-ppss)))
       nil
     t))
@@ -362,6 +444,7 @@ to the record type."
 
 (defun epics--inside-comment-p ()
   "Return t if point in comment."
+
   (if (null (nth 4 (syntax-ppss)))
       nil
     t))
@@ -369,10 +452,12 @@ to the record type."
 
 (defun epics--inside-comment-string-p ()
   "Return t if point in comment or string."
+
   (if (or (epics--inside-comment-p)
           (epics--inside-string-p))
       t
     nil))
+
 
 ;; indentation function
 (defun epics--calc-indent ()
@@ -424,6 +509,8 @@ to the record type."
   (define-key epics-mode-map (kbd "C-c C-;") #'epics-retrace-link)
   (define-key epics-mode-map (kbd "C-c h r") #'epics-describe-record)
   (define-key epics-mode-map (kbd "C-c h h") #'epics-open-reference)
+  (define-key epics-mode-map (kbd "C-c C-j") #'epics-next-value)
+  (define-key epics-mode-map (kbd "C-c C-k") #'epics-previous-value)
   (define-key epics-mode-map (kbd "C-c C-l") #'epics-next-record)
   (define-key epics-mode-map (kbd "C-c C-h") #'epics-previous-record))
 
