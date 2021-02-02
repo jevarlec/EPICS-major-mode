@@ -169,12 +169,12 @@ By default it does not search the comments or strings."
     (cond ((epics--inside-comment-p)
            (if include-comments
                point-after-search
-             nil))
+             (epics--search-with search-func string include-strings include-comments)))
 
           ((epics--inside-string-p)
            (if include-strings
                point-after-search
-             nil))
+             (epics--search-with search-func string include-strings include-comments)))
 
           (t point-after-search))))
 
