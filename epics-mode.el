@@ -123,58 +123,55 @@ not epics-path-to-base.")
       (message "Invalid base path set: %s" epics-path-to-base))))
 
 
-(defun epics--string-on-line-p (string &optional include-strings)
+(defun epics--string-on-line-p (string &optional inside-strings)
   "Return non-nil if STRING is present on the current line.
 
-Also searches strings if INCLUDE-STRINGS is non-nil."
+Also searches strings if INSIDE-STRINGS is non-nil."
 
   (save-excursion
     (beginning-of-line)
       (if (string-match-p string (thing-at-point 'line t))
-          (epics--search-forward string include-strings)
+          (epics--search-forward string inside-strings)
         nil)))
 
 
-(defun epics--search-forward (string &optional include-strings include-comments)
-  "Same as `search-forward', except it provides options
-to either INCLUDE-STRINGS or INCLUDE-COMMENTS in the search
-if either is set to t.
+(defun epics--search-forward (string &optional inside-strings inside-comments)
+  "Same as `search-forward', except it provides options to do
+search INSIDE-STRINGS or INSIDE-COMMENTS if either is set to t.
 
 By default it does not search the comments or strings."
 
-  (epics--search-with #'search-forward string include-strings include-comments))
+  (epics--search-with #'search-forward string inside-strings inside-comments))
 
 
-(defun epics--search-backward (string &optional include-strings include-comments)
-  "Same as `search-backward', except it provides options
-to either INCLUDE-STRINGS or INCLUDE-COMMENTS in the search
-if either is set to t.
+(defun epics--search-backward (string &optional inside-strings inside-comments)
+  "Same as `search-backward', except it provides options to do
+search INSIDE-STRINGS or INSIDE-COMMENTS if either is set to t.
 
 By default it does not search the comments or strings."
 
-  (epics--search-with #'search-backward string include-strings include-comments))
+  (epics--search-with #'search-backward string inside-strings inside-comments))
 
 
-(defun epics--search-with (search-func string &optional include-strings include-comments)
+(defun epics--search-with (search-func string &optional inside-strings inside-comments)
   "Use this function with a wrapper! e.g. `epics--search-forward'
 
-Same as desired SEARCH-FUNC, except it provides options
-to either INCLUDE-STRINGS or INCLUDE-COMMENTS in the search
-if either is set to t.
+Same as desired SEARCH-FUNC, except it provides options to do
+search INSIDE-STRINGS or INSIDE-COMMENTS if either is set to t.
 
 By default it does not search the comments or strings."
 
   (let ((point-after-search (funcall search-func string nil t nil)))
 
     (cond ((epics--inside-comment-p)
-           (if include-comments
+           (if inside-comments
                point-after-search
-             (epics--search-with search-func string include-strings include-comments)))
+             (epics--search-with search-func string inside-strings inside-comments)))
 
           ((epics--inside-string-p)
-           (if include-strings
+           (if inside-strings
                point-after-search
-             (epics--search-with search-func string include-strings include-comments)))
+             (epics--search-with search-func string inside-strings inside-comments)))
 
           (t point-after-search))))
 
