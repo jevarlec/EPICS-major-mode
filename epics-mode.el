@@ -123,13 +123,15 @@ not epics-path-to-base.")
       (message "Invalid base path set: %s" epics-path-to-base))))
 
 
-(defun epics--string-on-line-p (string)
-  "Return non-nil if STRING is present on the current line."
+(defun epics--string-on-line-p (string &optional include-strings)
+  "Return non-nil if STRING is present on the current line.
+
+Also searches strings if INCLUDE-STRINGS is non-nil."
 
   (save-excursion
     (beginning-of-line)
       (if (string-match-p string (thing-at-point 'line t))
-          (epics--search-forward string)
+          (epics--search-forward string include-strings)
         nil)))
 
 
@@ -317,7 +319,7 @@ first line that consists of record type and name."
     (unless body-only
       (when (epics--string-on-line-p "record")
         (throw 'result t)))
-    (cond ((equal 1 (car (syntax-ppss))) t)
+    (cond ((> (car (syntax-ppss)) 0) t)
           ((epics--string-on-line-p "{") t)
           (t nil))))
 
