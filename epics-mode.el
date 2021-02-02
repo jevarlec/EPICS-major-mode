@@ -124,15 +124,13 @@ not epics-path-to-base.")
 
 
 (defun epics--string-on-line-p (string)
-  "Check if STRING is present on the current line."
+  "Return non-nil if STRING is present on the current line."
 
   (save-excursion
     (beginning-of-line)
-    (skip-chars-forward "\t ")
-    (let ((result (looking-at-p string)))
-      (if (null result)
-          nil
-        t))))
+      (if (string-match-p string (thing-at-point 'line t))
+          (epics--search-forward string)
+        nil)))
 
 
 (defun epics--search-forward (string &optional include-strings include-comments)
