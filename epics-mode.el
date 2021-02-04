@@ -4,7 +4,7 @@
 
 ;; Author: Jernej Varlec <jernej@varlec.si>
 ;; Keywords: elisp, epics
-;; Version: 0.5.0
+;; Version: 0.5.1
 
 ;; This file is not part of GNU Emacs.
 

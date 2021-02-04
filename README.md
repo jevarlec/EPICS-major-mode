@@ -2,9 +2,9 @@
 
 Author: Jernej Varlec
 
-Version: 0.5.0
+Version: 0.5.1
 
-## Installation and Uninstallation
+## Installation, Updating and Uninstallation
 
 NOTE: For best experience, use Emacs version >= 27.
 
@@ -19,6 +19,8 @@ To remove:
 2. Run `M-x package-list-packages`. Search for *epics-mode*, put the point on it and press enter.
 3. In the package details buffer, press `delete`.
 4. Delete the cloned repo.
+
+Note that when you pull changes it might be necessary to run `M-x package-install-file` again.
 
 ## Features
 
@@ -38,7 +40,9 @@ Effortlessly access record reference pages by simply pointing at the record and 
 
 ### Assisted Database Navigation
 
-You can follow the link fields if they point to a record. This provides quick navigation between linked records. For now this feature is limited and cannot navigate between files.
+You can follow the link fields if they point to a record. This provides quick navigation between linked records. For now this feature is limited and cannot navigate between files. 
+
+You can also quickly navigate between records and values.
 
 ## Customization
 
@@ -59,6 +63,10 @@ The help buffer is at the moment only useful for reading the reference files. It
 
 ## Using the Navigation Commands
 
+Commands 'epics-next-record' (`C-c C-l`) and 'epics-previous-record' (`C-c C-h`) allow for quick navigation between record blocks. Invoking either command will put the point at the record type.
+
+To quickly navigate between values, use commands 'epics-next-value' (`C-c C-j`) and 'epics-previous-value' (`C-c C-k`). This will put the point at the beginning of double quotes, if the value is enclosed with double quotes, or next to the comma.
+
 The mode provides two commands that allow you to quickly navigate between linked records: 'epics-follow-link' (`C-c C-'`), which will find the appropriate record and move point to it. I will also remember where it was before. This is where the second command comes in: 'epics-retrace-link' (`C-c C-;`), which will retrace the steps you took to get where you are now.
 
 These commands are (for now at least) not aware of records residing in a different database file.
@@ -69,3 +77,7 @@ These commands are (for now at least) not aware of records residing in a differe
 * `C-c C-;` - epics-retrace-link: Retrace the last followed link
 * `C-c h r` - epics-describe-record: Find record type under cursor and display record reference
 * `C-c h h` - epics-open-reference: Ask user what reference file to open
+* `C-c C-l` - epics-next-record: Put point at the record type of the next record block
+* `C-c C-h` - epics-previous-record: Put point at the record type of the previous record block
+* `C-c C-j` - epics-next-value: Put point at the next value
+* `C-c C-k` - epics-previous-value: Put point at the previous value
