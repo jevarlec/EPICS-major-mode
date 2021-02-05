@@ -50,11 +50,11 @@ path from environment variables.  Default is 'env'."
                 (directory)))
 
 ;; define custom faces
-(defface epics-mode-face-shadow
+(defface epics-face-shadow
   '((t :inherit shadow))
   "Face name to be used for records and fields.")
 
-(defface epics-mode-face-link-param
+(defface epics-face-link-param
   '((t :inherit font-lock-constant-face
        :weight bold))
   "Bold face for link parameters.")
@@ -74,8 +74,8 @@ path from environment variables.  Default is 'env'."
 
         `(
           ;; apply faces to generated regex
-          (,epics-shadow-regexp . 'epics-mode-face-shadow)
-          (,epics-link-params-regexp 0 'epics-mode-face-link-param t)
+          (,epics-shadow-regexp . 'epics-face-shadow)
+          (,epics-link-params-regexp 0 'epics-face-link-param t)
           (,(format "\"%s\"" epics-keywords-regexp) 1 font-lock-keyword-face t)
 
           ;; define regex for asyn i/o parameters
