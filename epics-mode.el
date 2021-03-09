@@ -49,6 +49,12 @@ path from environment variables.  Default is 'env'."
   :type '(choice (const :tag "From environment variables" :value "env")
                 (directory)))
 
+(defcustom epics-default-snippet-table
+  '(("rai" ("ai" "desc" "dtyp" "inp"))
+    ("rao" ("ao" "desc" "dtyp" "out"))
+    ("rcalc" ("calc" "desc" "calc" "inpa" "inpb")))
+  "Default snippet table used for record expansion.")
+
 ;; define custom faces
 (defface epics-face-shadow
   '((t :inherit shadow))
@@ -301,6 +307,165 @@ point is inside a record block."
     nil))
 
 
+;; abbrev/snippet functions and variables
+(defvar-local epics-local-snippet-alist '()
+  "An alist of all snippet definitions.  This is loaded from
+  `epics-default-snippet-table' at start.  Use
+  `epics-save-local-snippet-alist-as-default' to save the local
+  alist.")
+
+(defvar epics-factory-default-snippet-table
+  '((fai (ai desc))
+    (fcalc (calc desc calc)))
+  "This alist is a factory default should the user want to reset
+  his `epics-default-snippet-table'.")
+
+
+(defun epics-show-local-snippet-alist ()
+  "Display contents of `epics-local-snippet-alist' in the
+messages buffer."
+
+  (interactive)
+  (message "%s" epics-local-snippet-alist))
+
+
+(defun epics-add-snippet-to-local-alist ()
+  "Prompt user to enter the desired snippet, parse it, and add it
+to the `epics-local-snippet-alist'."
+
+  (interactive)
+  (let* ((snippet-to-add
+          (read-string "Enter the desired snippet in the following form: id record-type field1 field2 .... fieldN: "))
+         (tokenized-snippet (split-string (format "%s" snippet-to-add)))
+         (parsed-snippet (cons (car tokenized-snippet)
+                               (list (cdr tokenized-snippet)))))
+
+    (add-to-list 'epics-local-snippet-alist parsed-snippet t)))
+
+
+(defun epics-clear-local-snippet-alist ()
+  "Clear all snippets from `epics-local-snippet-alist'."
+
+  (interactive)
+  (let ((confirmation
+         (y-or-n-p "Are you sure you want to clear the local snippet list?")))
+
+    (when confirmation
+      (setq-local epics-local-snippet-alist nil))))
+
+
+(defun epics-save-local-snippet-alist-as-default ()
+  "Save contents of `epics-local-snippet-alist' to
+`epics-default-snippet-table'."
+
+  (interactive)
+  (let ((confirmation
+         (y-or-n-p "Are you sure you want to save the local snippets as default?")))
+
+    (when confirmation
+      (setq-default epics-default-snippet-table epics-local-snippet-alist))))
+
+
+(defun epics-restore-default-snippet-table ()
+  "Restores the factory default snippet table
+  `epics-default-snippet-table'."
+
+  (interactive)
+  (let ((confirmation "Are you sure you want to restore factory default snippet table?"))
+
+    (when confirmation
+      (setq-default epics-default-snippet-table epics-factory-default-snippet-table))))
+
+
+(defun epics-load-default-snippets-to-local-alist ()
+  "Load contents of `epics-default-snippet-table' to
+`epics-local-snippet-alist'."
+
+  (interactive)
+  (setq-local epics-local-snippet-alist epics-default-snippet-table))
+
+
+(defun epics--create-abbrev (snippet)
+  "Call `define-abbrev' using SNIPPET as arguments. The function
+that does insertion of abbrev is `epics--insert-abbrev-string'."
+
+  (let ((snippet-id (car snippet))
+        (snippet-body (cdr snippet)))
+
+    (define-abbrev
+      epics-mode-abbrev-table
+      (format "%s" snippet-id)
+      ""
+      (lambda () (epics--insert-format-repos-abbrev-string snippet-body))
+      :enable-function #'epics-abbrev-enable-func
+      :system t)))
+
+
+(defun epics-abbrev-enable-func ()
+  "Return t when point is not inside a record block, comment, or
+string."
+  (not (or (epics--inside-record-block-p)
+           (epics--inside-comment-string-p))))
+
+
+(defun epics--insert-format-repos-abbrev-string (snippet-body)
+  "Expand, insert and format the abbrev using SNIPPET-BODY, then
+reposition the point inside string delimiters."
+
+  (insert (epics--create-abbrev-expansion-string snippet-body))
+
+  (let ((p1 (point))
+        (p2 (epics--search-backward "record")))
+    (indent-region p2 p1))
+
+  (epics--position-point-at-value)
+  (signal 'quit nil))
+
+
+(defun epics--create-abbrev-expansion-string (snippet-body)
+  "Create and return the expansion string using SNIPPET-BODY."
+
+  (let ((record-type (caar snippet-body))
+        (record-metadata (cdar snippet-body)))
+
+    (format "record (%s, \"\") {%s"
+            record-type
+            (epics--expand-record-body record-metadata))))
+
+
+(defun epics--expand-record-body (record-metadata)
+  "Create and return the formatted string from RECORD-METADATA
+which should be a list."
+
+  (defun accum (record-metadata result)
+    (if (null (car record-metadata))
+        (format "%s\n}" result)
+      (accum (cdr record-metadata)
+             (concat result (format "\nfield (%s, \"\")"
+                                    (upcase (car record-metadata)))))))
+
+  (accum record-metadata ""))
+
+
+(defun epics--generate-abbrevs-from-snippet-table (table)
+  "Create abbrev definitions for all snippets in TABLE."
+
+  (if (null (car table))
+      t
+    (epics--create-abbrev (car table))
+    (epics--generate-abbrevs-from-snippet-table (cdr table))))
+
+
+(defun epics--regenerate-abbrevs-from-snippet-table ()
+  "Clear current `epics-mode-abbrev-table' and regenerate new
+abbrevs from `epics-local-snippet-alist'."
+
+  (clear-abbrev-table epics-mode-abbrev-table)
+  (setq abbrevs-changed nil)  ; we want to use epics-save-local-snippet-alist for saving abbrevs
+  (epics--generate-abbrevs-from-snippet-table epics-local-snippet-alist)
+  (abbrev-table-put epics-mode-abbrev-table :system t))
+
+
 ;; epics reference functions
 (defun epics--render-help-file (html-file)
   "Render the HTML-FILE in the help buffer if possible.
@@ -528,7 +693,13 @@ type."
   (setq-local comment-end "")
 
   ;; epics indentation function
-  (setq-local indent-line-function #'epics-indent-line))
+  (setq-local indent-line-function #'epics-indent-line)
+
+  ;; abbrevs
+  (setq-local epics-local-snippet-alist nil)
+  (epics-load-default-snippets-to-local-alist)
+  (epics--regenerate-abbrevs-from-snippet-table)
+  (abbrev-mode 1))
 
 
 (provide 'epics-mode)
