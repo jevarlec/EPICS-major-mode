@@ -20,8 +20,8 @@
 
 ;;; Description:
 
-;; A major mode for editing EPICS .db and .template files
-;; Features syntax highlighting and (eventually) code snippets.
+;; A major mode for editing EPICS .db and .template files.
+;; Consult README.md for detailed description and features.
 
 ;;; Code:
 
