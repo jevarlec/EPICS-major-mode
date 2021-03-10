@@ -47,13 +47,15 @@ changing this.  If set to 'env', then epics-mode will try to get
 path from environment variables.  Default is 'env'."
   :group 'epics-config
   :type '(choice (const :tag "From environment variables" :value "env")
-                (directory)))
+                 (directory)))
 
-(defcustom epics-default-snippet-table
-  '(("rai" ("ai" "desc" "dtyp" "inp"))
-    ("rao" ("ao" "desc" "dtyp" "out"))
-    ("rcalc" ("calc" "desc" "calc" "inpa" "inpb")))
-  "Default snippet table used for record expansion.")
+(defcustom epics-default-var-dir
+  (concat user-emacs-directory "var/epics/")
+  "Default directory used for persistent variables."
+  :group 'epics-config
+  :type '(choice (const :tag "user-emacs-directory/var/epics"
+                        :value (concat user-emacs-directory "epics/var/"))
+                 (directory)))
 
 ;; define custom faces
 (defface epics-face-shadow
