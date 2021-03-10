@@ -309,6 +309,20 @@ point is inside a record block."
     nil))
 
 
+(defun epics--print-data-to-file (data filename)
+  "Write DATA as lisp object to file FILENAME."
+
+  (with-temp-file filename
+    (prin1 data (current-buffer))))
+
+
+(defun epics--read-data-from-file (filename)
+  "Read and return lisp objects from file FILENAME."
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (read (current-buffer))))
+
+
 ;; abbrev/snippet functions and variables
 (defvar-local epics-local-snippet-alist '()
   "An alist of all snippet definitions.  This is loaded from
