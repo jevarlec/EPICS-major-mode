@@ -325,16 +325,21 @@ point is inside a record block."
 
 ;; abbrev/snippet functions and variables
 (defvar-local epics-local-snippet-alist '()
-  "An alist of all snippet definitions.  This is loaded from
-  `epics-default-snippet-table' at start.  Use
-  `epics-save-local-snippet-alist-as-default' to save the local
-  alist.")
+  "An alist of all snippet definitions.  This is loaded from a
+  file located at `epics-default-var-dir' at start.  Use
+  `epics-save-local-snippet-alist' to save the local alist.")
 
 (defvar epics-factory-default-snippet-table
-  '((fai (ai desc))
-    (fcalc (calc desc calc)))
+  '(("fai" ("ai" "desc"))
+    ("fcalc" ("calc" "desc" "calc")))
   "This alist is a factory default should the user want to reset
-  his `epics-default-snippet-table'.")
+  his `epics-saved-snippets-file'.")
+
+(defconst +epics-saved-snippets-filename+ "epics-saved-snippets"
+  "Filename for file containing snippets.")
+
+(defvar-local epics-saved-snippets-file (concat epics-default-var-dir
+                                                +epics-saved-snippets-filename+))
 
 
 (defun epics-show-local-snippet-alist ()
@@ -370,16 +375,17 @@ to the `epics-local-snippet-alist'."
       (setq-local epics-local-snippet-alist nil))))
 
 
-(defun epics-save-local-snippet-alist-as-default ()
-  "Save contents of `epics-local-snippet-alist' to
-`epics-default-snippet-table'."
+(defun epics-save-local-snippet-alist ()
+  "Save contents of `epics-local-snippet-alist' to a file located at
+`epics-default-'."
 
   (interactive)
   (let ((confirmation
          (y-or-n-p "Are you sure you want to save the local snippets as default?")))
 
     (when confirmation
-      (setq-default epics-default-snippet-table epics-local-snippet-alist))))
+      (epics--print-data-to-file epics-local-snippet-alist
+                                 epics-saved-snippets-file))))
 
 
 (defun epics-restore-default-snippet-table ()
@@ -387,18 +393,21 @@ to the `epics-local-snippet-alist'."
   `epics-default-snippet-table'."
 
   (interactive)
-  (let ((confirmation "Are you sure you want to restore factory default snippet table?"))
+  (let ((confirmation
+         (y-or-n-p "Are you sure you want to restore factory default snippet table?")))
 
     (when confirmation
-      (setq-default epics-default-snippet-table epics-factory-default-snippet-table))))
+      (epics--print-data-to-file epics-factory-default-snippet-table
+                                 epics-saved-snippets-file))))
 
 
-(defun epics-load-default-snippets-to-local-alist ()
-  "Load contents of `epics-default-snippet-table' to
+(defun epics-load-saved-snippets-to-local-alist ()
+  "Load contents of `+epics-saved-snippets-filename+'to
 `epics-local-snippet-alist'."
 
   (interactive)
-  (setq-local epics-local-snippet-alist epics-default-snippet-table))
+  (setq-local epics-local-snippet-alist
+              (epics--read-data-from-file epics-saved-snippets-file)))
 
 
 (defun epics--create-abbrev (snippet)
@@ -428,7 +437,13 @@ string."
   "Expand, insert and format the abbrev using SNIPPET-BODY, then
 reposition the point inside string delimiters."
 
-  (insert (epics--create-abbrev-expansion-string snippet-body))
+  (save-excursion
+    (previous-line)
+    (unless (epics--blank-line-p)
+      (end-of-line)
+      (insert "\n")))
+
+  (insert (epics--create-abbrev-expansion-string snippet-body) "\n")
 
   (let ((p1 (point))
         (p2 (epics--search-backward "record")))
@@ -478,8 +493,7 @@ abbrevs from `epics-local-snippet-alist'."
 
   (clear-abbrev-table epics-mode-abbrev-table)
   (setq abbrevs-changed nil)  ; we want to use epics-save-local-snippet-alist for saving abbrevs
-  (epics--generate-abbrevs-from-snippet-table epics-local-snippet-alist)
-  (abbrev-table-put epics-mode-abbrev-table :system t))
+  (epics--generate-abbrevs-from-snippet-table epics-local-snippet-alist))
 
 
 ;; epics reference functions
@@ -700,6 +714,17 @@ type."
 
   ;; initial setup
   (setq-local epics--actual-base-dir (epics--get-base-dir-string))
+  (setq-local epics-local-snippet-alist nil)
+
+  (unless (file-accessible-directory-p epics-default-var-dir)
+    (make-directory epics-default-var-dir))
+
+  (if (file-exists-p epics-saved-snippets-file)
+      (epics-load-saved-snippets-to-local-alist)
+    (message "new file")
+    (epics--print-data-to-file epics-factory-default-snippet-table
+                               epics-saved-snippets-file)
+    (epics-load-saved-snippets-to-local-alist))
 
   ;; enable syntax highlighting
   (setq-local font-lock-defaults '((epics-font-lock-keywords)))
@@ -712,8 +737,6 @@ type."
   (setq-local indent-line-function #'epics-indent-line)
 
   ;; abbrevs
-  (setq-local epics-local-snippet-alist nil)
-  (epics-load-default-snippets-to-local-alist)
   (epics--regenerate-abbrevs-from-snippet-table)
   (abbrev-mode 1))
 
