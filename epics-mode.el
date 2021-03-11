@@ -50,12 +50,30 @@ path from environment variables.  Default is 'env'."
                  (directory)))
 
 (defcustom epics-default-var-dir
-  (concat user-emacs-directory "var/epics/")
+  (concat user-emacs-directory "var/epics-mode/")
   "Default directory used for persistent variables."
   :group 'epics-config
-  :type '(choice (const :tag "user-emacs-directory/var/epics"
-                        :value (concat user-emacs-directory "epics/var/"))
+  :type '(choice (const :tag "user-emacs-directory/var/epics-mode"
+                        :value (concat user-emacs-directory "var/epics-mode/"))
                  (directory)))
+
+(defcustom epics-always-include-desc t
+  "If set to non-nil, always add a DESC field when expanding a
+  snippet. It is set to t by default."
+  :group 'epics-config
+  :type '(choice (const :tag "Yes"
+                        :value t)
+                 (const :tag "No"
+                        :value nil)))
+
+(defcustom epics-always-include-scan t
+  "If set to non-nil, always include SCAN field when expanding a
+  snippet. It is set to t by default."
+  :group 'epics-config
+  :type '(choice (const :tag "Yes"
+                        :value t)
+                 (const :tag "No"
+                        :value nil)))
 
 ;; define custom faces
 (defface epics-face-shadow
