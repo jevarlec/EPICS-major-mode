@@ -394,10 +394,23 @@ point is inside a record block."
 
 (defun epics-show-local-snippet-alist ()
   "Display contents of `epics-local-snippet-alist' in the
-messages buffer."
+help buffer."
 
   (interactive)
-  (message "%s" epics-local-snippet-alist))
+
+  (defun print-snippets (snippets)
+    (if (null snippets)
+        t
+      (prin1 (car snippets) (current-buffer))
+      (insert "\n")
+      (print-snippets (cdr snippets))))
+
+  (let ((buf-name "Local Snippets")
+        (snippets-to-print epics-local-snippet-alist))
+
+    (with-output-to-temp-buffer buf-name
+      (switch-to-buffer-other-window buf-name)
+      (print-snippets snippets-to-print))))
 
 
 (defun epics-add-snippet-to-local-alist ()
