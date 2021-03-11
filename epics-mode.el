@@ -347,13 +347,45 @@ point is inside a record block."
   file located at `epics-default-var-dir' at start.  Use
   `epics-save-local-snippet-alist' to save the local alist.")
 
-(defvar epics-factory-default-snippet-table
-  '(("fai" ("ai" "desc"))
-    ("fcalc" ("calc" "desc" "calc")))
+(defconst +epics-factory-default-snippet-table+
+  '((";ai" ("ai" "dtyp" "egu" "inp"))
+    (";aai" ("aai" "dtyp" "egu" "inp" "nelm" "ftvl"))
+    (";ao" ("ao" "dtyp" "out" "drvh" "drvl"))
+    (";aao" ("aao" "dtyp" "out" "nelm" "ftvl"))
+    (";asub" ("aSub" "snam" "inpa" "fta" "noa"))
+    (";bi" ("bi" "dtyp" "inp" "znam" "onam"))
+    (";bo" ("bo" "dtyp" "out" "znam" "onam"))
+    (";calcout" ("calcout" "calc" "inpa"))
+    (";calc" ("calc" "calc" "inpa"))
+    (";compress" ("compress" "inp" "alg" "nsam"))
+    (";dfanout" ("dfanout"))
+    (";event" ("event" "dtyp" "inp"))
+    (";fanout" ("fanout"))
+    (";histogram" ("histogram" "dtyp" "svl" "nelm" "ulim" "llim"))
+    (";int64in" ("int64in" "dtyp" "egu" "inp"))
+    (";int64out" ("int64out" "dtyp" "out" "drvh" "drvl"))
+    (";longin" ("longin" "dtyp" "egu" "inp"))
+    (";longout" ("longout" "dtyp" "out" "drvh" "drvl"))
+    (";lsi" ("lsi" "dtyp" "sizv" "inp"))
+    (";lso" ("lso" "dtyp" "sizv" "out"))
+    (";mbbi" ("mbbi" "dtyp" "inp" "zrvl" "zrst"))
+    (";mbbid" ("mbbiDirect" "dtyp" "inp" "b0"))
+    (";mbbo" ("mbbo" "dtyp" "out" "zrvl" "zrst"))
+    (";mbbod" ("mbboDirect" "dtyp" "out" "b0"))
+    (";permissive" ("permissive" "wflg" "labl"))
+    (";printf" ("printf" "sizv" "len" "fmt" "out" "inp0"))
+    (";sel" ("sel" "selm" "seln" "nvl"))
+    (";seq" ("seq" "selm" "seln" "dol0" "lnk0"))
+    (";state" ("state"))
+    (";stringin" ("stringin" "dtyp" "inp"))
+    (";stringout" ("stringout" "dtyp" "out"))
+    (";subarray" ("subArray" "dtyp" "inp" "ftvl" "malm" "indx"))
+    (";sub" ("sub" "snam" "inpa"))
+    (";waveform" ("waveform" "dtyp" "egu" "inp" "ftvl")))
   "This alist is a factory default should the user want to reset
   his `epics-saved-snippets-file'.")
 
-(defconst +epics-saved-snippets-filename+ "epics-saved-snippets"
+(defconst +epics-saved-snippets-filename+ "epics-mode-saved-snippets.el"
   "Filename for file containing snippets.")
 
 (defvar-local epics-saved-snippets-file (concat epics-default-var-dir
@@ -711,6 +743,9 @@ type."
         (modify-syntax-entry ?# "<" synTable)
         (modify-syntax-entry ?\n ">" synTable)
 
+        ;; ; is a word constituent so it can be used with abbrevs
+        (modify-syntax-entry 59 "w" synTable)
+
         synTable))
 
 
@@ -740,7 +775,7 @@ type."
   (if (file-exists-p epics-saved-snippets-file)
       (epics-load-saved-snippets-to-local-alist)
     (message "new file")
-    (epics--print-data-to-file epics-factory-default-snippet-table
+    (epics--print-data-to-file +epics-factory-default-snippet-table+
                                epics-saved-snippets-file)
     (epics-load-saved-snippets-to-local-alist))
 
