@@ -439,8 +439,8 @@ to the `epics-local-snippet-alist'."
 
 
 (defun epics-save-local-snippet-alist ()
-  "Save contents of `epics-local-snippet-alist' to a file located at
-`epics-default-'."
+  "Save contents of `epics-local-snippet-alist' to a file located
+in `epics-default-var-dir'."
 
   (interactive)
   (let ((confirmation
