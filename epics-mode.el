@@ -434,8 +434,10 @@ to the `epics-local-snippet-alist'."
          (y-or-n-p "Are you sure you want to save the local snippets as default?")))
 
     (when confirmation
-      (epics--print-data-to-file epics-local-snippet-alist
-                                 epics-saved-snippets-file))))
+      (if (file-writable-p epics-saved-snippets-file)
+          (epics--print-data-to-file epics-local-snippet-alist
+                                     epics-saved-snippets-file)
+        (message "File not writable: %s" epics-saved-snippets-file)))))
 
 
 (defun epics-restore-default-snippet-table ()
@@ -447,8 +449,10 @@ to the `epics-local-snippet-alist'."
          (y-or-n-p "Are you sure you want to restore factory default snippet table?")))
 
     (when confirmation
-      (epics--print-data-to-file epics-factory-default-snippet-table
-                                 epics-saved-snippets-file))))
+      (if (file-writable-p epics-saved-snippets-file)
+          (epics--print-data-to-file +epics-factory-default-snippet-table+
+                                     epics-saved-snippets-file)
+        (message "File not writable: %s" epics-saved-snippets-file)))))
 
 
 (defun epics-load-saved-snippets-to-local-alist ()
@@ -456,8 +460,10 @@ to the `epics-local-snippet-alist'."
 `epics-local-snippet-alist'."
 
   (interactive)
-  (setq-local epics-local-snippet-alist
-              (epics--read-data-from-file epics-saved-snippets-file)))
+  (if (file-readable-p epics-saved-snippets-file)
+      (setq-local epics-local-snippet-alist
+                  (epics--read-data-from-file epics-saved-snippets-file))
+    (message "File not readable: %s" epics-saved-snippets-file)))
 
 
 (defun epics--create-abbrev (snippet)
