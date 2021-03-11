@@ -515,7 +515,7 @@ reposition the point inside string delimiters."
   (let ((record-type (caar snippet-body))
         (record-metadata (cdar snippet-body)))
 
-    (format "record (%s, \"\") {%s"
+    (format "record(%s, \"\") {%s"
             record-type
             (epics--expand-record-body record-metadata))))
 
@@ -528,8 +528,13 @@ which should be a list."
     (if (null (car record-metadata))
         (format "%s\n}" result)
       (accum (cdr record-metadata)
-             (concat result (format "\nfield (%s, \"\")"
+             (concat result (format "\nfield(%s, \"\")"
                                     (upcase (car record-metadata)))))))
+
+  (when epics-always-include-scan
+    (setq record-metadata (cons "scan" record-metadata)))
+  (when epics-always-include-desc
+    (setq record-metadata (cons "desc" record-metadata)))
 
   (accum record-metadata ""))
 
