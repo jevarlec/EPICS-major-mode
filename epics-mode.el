@@ -392,7 +392,7 @@ point is inside a record block."
                                                 +epics-saved-snippets-filename+))
 
 
-(defun epics-show-local-snippet-alist ()
+(defun epics-show-local-snippet-alist (&optional dont-change-focus)
   "Display contents of `epics-local-snippet-alist' in the
 help buffer."
 
@@ -406,25 +406,84 @@ help buffer."
       (print-snippets (cdr snippets))))
 
   (let ((buf-name "Local Snippets")
+        (original-buf (current-buffer))
         (snippets-to-print epics-local-snippet-alist))
 
     (with-output-to-temp-buffer buf-name
       (switch-to-buffer-other-window buf-name)
-      (print-snippets snippets-to-print))))
+      (print-snippets snippets-to-print)
+      (when dont-change-focus
+        (switch-to-buffer-other-window original-buf)))
+    buf-name))
 
 
-(defun epics-add-snippet-to-local-alist ()
-  "Prompt user to enter the desired snippet, parse it, and add it
-to the `epics-local-snippet-alist'."
+(defun epics-add-snippet-to-local-alist-maybe (&optional initial-val return-instead)
+  "Prompt user to enter the desired snippet and parse it. Add it
+to the `epics-local-snippet-alist' if RETURN-INSTEAD is nil,
+otherwise return it.
+
+INITIAL-VAL is a string to be inserted into minibuffer for
+`read-string' function."
 
   (interactive)
   (let* ((snippet-to-add
-          (read-string "Enter the desired snippet in the following form: id record-type field1 field2 .... fieldN: "))
+          (read-string "Enter the desired snippet in the following form: id record-type field1 field2 .... fieldN: " initial-val))
          (tokenized-snippet (split-string (format "%s" snippet-to-add)))
          (parsed-snippet (cons (car tokenized-snippet)
                                (list (cdr tokenized-snippet)))))
 
-    (add-to-list 'epics-local-snippet-alist parsed-snippet t)))
+    (if return-instead
+        parsed-snippet
+      (add-to-list 'epics-local-snippet-alist parsed-snippet t))))
+
+
+(defun epics-edit-snippet ()
+  "Prompt user to enter the id of the snippet to edit, then fetch
+the snippet and allow user to edit it in a minibuffer."
+
+  (interactive)
+  (let* ((help-buf (epics-show-local-snippet-alist t))
+         (snippet-id
+          (read-string "Enter the id of the snippet you wish to edit: "))
+         (fetched-snippet (flatten-list (assoc snippet-id
+                                               epics-local-snippet-alist)))
+         (snippet-string-to-edit (mapconcat #'identity fetched-snippet " "))
+         (new-snippet nil))
+
+    (if (null fetched-snippet)
+        (message "Snippet does not exist!")
+      (setq new-snippet (epics-add-snippet-to-local-alist-maybe snippet-string-to-edit t))
+      (when new-snippet
+        (epics-remove-snippet snippet-id)
+        (add-to-list 'epics-local-snippet-alist new-snippet t)))
+
+    (quit-windows-on help-buf)))
+
+
+(defun epics-remove-snippet (&optional snippet-id-to-remove)
+  "Prompt user to enter the id of the snippet to remove, then
+remove it from `epics-local-snippet-alist'.
+
+SNIPPET-ID-TO-REMOVE is a string containing the snippet id. If
+nil, then the above mentioned procedure of prompting the user is
+executed. If not nil, then prompting is skipped and
+SNIPPET-ID-TO-REMOVE is used to delete the snippet."
+
+  (interactive)
+  (let* ((help-buf (unless snippet-id-to-remove (epics-show-local-snippet-alist t)))
+         (snippet-id-to-remove (if snippet-id-to-remove
+                                   snippet-id-to-remove
+                                 (read-string "Enter the id of the snippet you wish to remove: ")))
+         (snippet-to-remove nil))
+
+    (setq snippet-to-remove (assoc snippet-id-to-remove epics-local-snippet-alist))
+    (if (null snippet-to-remove)
+        (message "Snippet does not exist!")
+      (setq-local epics-local-snippet-alist (remove snippet-to-remove
+                                                    epics-local-snippet-alist)))
+
+    (when help-buf
+      (quit-windows-on help-buf))))
 
 
 (defun epics-clear-local-snippet-alist ()
