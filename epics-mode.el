@@ -342,10 +342,10 @@ point is inside a record block."
 
 
 ;; abbrev/snippet functions and variables
-(defvar-local epics-local-snippet-alist '()
+(defvar-local epics-active-snippet-alist '()
   "An alist of all snippet definitions.  This is loaded from a
   file located at `epics-default-var-dir' at start.  Use
-  `epics-save-local-snippet-alist' to save the local alist.")
+  `epics-save-active-snippet-alist' to save the local alist.")
 
 (defconst +epics-factory-default-snippet-table+
   '((";ai" ("ai" "dtyp" "egu" "inp"))
@@ -392,8 +392,8 @@ point is inside a record block."
                                                 +epics-saved-snippets-filename+))
 
 
-(defun epics-show-local-snippet-alist (&optional dont-change-focus)
-  "Display contents of `epics-local-snippet-alist' in the
+(defun epics-show-active-snippet-alist (&optional dont-change-focus)
+  "Display contents of `epics-active-snippet-alist' in the
 help buffer."
 
   (interactive)
@@ -407,7 +407,7 @@ help buffer."
 
   (let ((buf-name "Local Snippets")
         (original-buf (current-buffer))
-        (snippets-to-print epics-local-snippet-alist))
+        (snippets-to-print epics-active-snippet-alist))
 
     (with-output-to-temp-buffer buf-name
       (switch-to-buffer-other-window buf-name)
@@ -417,9 +417,9 @@ help buffer."
     buf-name))
 
 
-(defun epics-add-snippet-to-local-alist-maybe (&optional initial-val return-instead)
+(defun epics-add-snippet-to-active-alist-maybe (&optional initial-val return-instead)
   "Prompt user to enter the desired snippet and parse it. Add it
-to the `epics-local-snippet-alist' if RETURN-INSTEAD is nil,
+to the `epics-active-snippet-alist' if RETURN-INSTEAD is nil,
 otherwise return it. User must provide a least an id and record
 type.
 
@@ -441,13 +441,13 @@ INITIAL-VAL is a string to be inserted into minibuffer for
 
       (if return-instead
           parsed-snippet
-        (if (member (assoc (car tokenized-snippet) epics-local-snippet-alist)
-                    epics-local-snippet-alist)
+        (if (member (assoc (car tokenized-snippet) epics-active-snippet-alist)
+                    epics-active-snippet-alist)
             (progn
               (message "Snippet with this id already exists!")
-              (epics-show-local-snippet-alist)
+              (epics-show-active-snippet-alist)
               (search-forward-regexp (format "%s\""(car tokenized-snippet))))
-          (add-to-list 'epics-local-snippet-alist parsed-snippet t))))))
+          (add-to-list 'epics-active-snippet-alist parsed-snippet t))))))
 
 
 (defun epics-edit-snippet ()
@@ -455,27 +455,27 @@ INITIAL-VAL is a string to be inserted into minibuffer for
 the snippet and allow user to edit it in a minibuffer."
 
   (interactive)
-  (let* ((help-buf (epics-show-local-snippet-alist t))
+  (let* ((help-buf (epics-show-active-snippet-alist t))
          (snippet-id
           (read-string "Enter the id of the snippet you wish to edit: "))
          (fetched-snippet (flatten-list (assoc snippet-id
-                                               epics-local-snippet-alist)))
+                                               epics-active-snippet-alist)))
          (snippet-string-to-edit (mapconcat #'identity fetched-snippet " "))
          (new-snippet nil))
 
     (if (null fetched-snippet)
         (message "Snippet does not exist!")
-      (setq new-snippet (epics-add-snippet-to-local-alist-maybe snippet-string-to-edit t))
+      (setq new-snippet (epics-add-snippet-to-active-alist-maybe snippet-string-to-edit t))
       (when new-snippet
         (epics-remove-snippet snippet-id)
-        (add-to-list 'epics-local-snippet-alist new-snippet t)))
+        (add-to-list 'epics-active-snippet-alist new-snippet t)))
 
     (quit-windows-on help-buf)))
 
 
 (defun epics-remove-snippet (&optional snippet-id-to-remove)
   "Prompt user to enter the id of the snippet to remove, then
-remove it from `epics-local-snippet-alist'.
+remove it from `epics-active-snippet-alist'.
 
 SNIPPET-ID-TO-REMOVE is a string containing the snippet id. If
 nil, then the above mentioned procedure of prompting the user is
@@ -483,35 +483,35 @@ executed. If not nil, then prompting is skipped and
 SNIPPET-ID-TO-REMOVE is used to delete the snippet."
 
   (interactive)
-  (let* ((help-buf (unless snippet-id-to-remove (epics-show-local-snippet-alist t)))
+  (let* ((help-buf (unless snippet-id-to-remove (epics-show-active-snippet-alist t)))
          (snippet-id-to-remove (if snippet-id-to-remove
                                    snippet-id-to-remove
                                  (read-string "Enter the id of the snippet you wish to remove: ")))
          (snippet-to-remove nil))
 
-    (setq snippet-to-remove (assoc snippet-id-to-remove epics-local-snippet-alist))
+    (setq snippet-to-remove (assoc snippet-id-to-remove epics-active-snippet-alist))
     (if (null snippet-to-remove)
         (message "Snippet does not exist!")
-      (setq-local epics-local-snippet-alist (remove snippet-to-remove
-                                                    epics-local-snippet-alist)))
+      (setq-local epics-active-snippet-alist (remove snippet-to-remove
+                                                    epics-active-snippet-alist)))
 
     (when help-buf
       (quit-windows-on help-buf))))
 
 
-(defun epics-clear-local-snippet-alist ()
-  "Clear all snippets from `epics-local-snippet-alist'."
+(defun epics-clear-active-snippet-alist ()
+  "Clear all snippets from `epics-active-snippet-alist'."
 
   (interactive)
   (let ((confirmation
          (y-or-n-p "Are you sure you want to clear the local snippet list?")))
 
     (when confirmation
-      (setq-local epics-local-snippet-alist nil))))
+      (setq-local epics-active-snippet-alist nil))))
 
 
-(defun epics-save-local-snippet-alist ()
-  "Save contents of `epics-local-snippet-alist' to a file located
+(defun epics-save-active-snippet-alist ()
+  "Save contents of `epics-active-snippet-alist' to a file located
 in `epics-default-var-dir'."
 
   (interactive)
@@ -520,7 +520,7 @@ in `epics-default-var-dir'."
 
     (when confirmation
       (if (file-writable-p epics-saved-snippets-file)
-          (epics--print-data-to-file epics-local-snippet-alist
+          (epics--print-data-to-file epics-active-snippet-alist
                                      epics-saved-snippets-file)
         (message "File not writable: %s" epics-saved-snippets-file)))))
 
@@ -540,13 +540,13 @@ in `epics-default-var-dir'."
         (message "File not writable: %s" epics-saved-snippets-file)))))
 
 
-(defun epics-load-saved-snippets-to-local-alist ()
+(defun epics-load-saved-snippets-to-active-alist ()
   "Load contents of `+epics-saved-snippets-filename+'to
-`epics-local-snippet-alist'."
+`epics-active-snippet-alist'."
 
   (interactive)
   (if (file-readable-p epics-saved-snippets-file)
-      (setq-local epics-local-snippet-alist
+      (setq-local epics-active-snippet-alist
                   (epics--read-data-from-file epics-saved-snippets-file))
     (message "File not readable: %s" epics-saved-snippets-file)))
 
@@ -635,11 +635,11 @@ which should be a list."
 
 (defun epics--regenerate-abbrevs-from-snippet-table ()
   "Clear current `epics-mode-abbrev-table' and regenerate new
-abbrevs from `epics-local-snippet-alist'."
+abbrevs from `epics-active-snippet-alist'."
 
   (clear-abbrev-table epics-mode-abbrev-table)
-  (setq abbrevs-changed nil)  ; we want to use epics-save-local-snippet-alist for saving abbrevs
-  (epics--generate-abbrevs-from-snippet-table epics-local-snippet-alist))
+  (setq abbrevs-changed nil)  ; we want to use epics-save-active-snippet-alist for saving abbrevs
+  (epics--generate-abbrevs-from-snippet-table epics-active-snippet-alist))
 
 
 ;; epics reference functions
@@ -863,17 +863,17 @@ type."
 
   ;; initial setup
   (setq-local epics--actual-base-dir (epics--get-base-dir-string))
-  (setq-local epics-local-snippet-alist nil)
+  (setq-local epics-active-snippet-alist nil)
 
   (unless (file-accessible-directory-p epics-default-var-dir)
     (make-directory epics-default-var-dir))
 
   (if (file-exists-p epics-saved-snippets-file)
-      (epics-load-saved-snippets-to-local-alist)
+      (epics-load-saved-snippets-to-active-alist)
     (message "new file")
     (epics--print-data-to-file +epics-factory-default-snippet-table+
                                epics-saved-snippets-file)
-    (epics-load-saved-snippets-to-local-alist))
+    (epics-load-saved-snippets-to-active-alist))
 
   ;; enable syntax highlighting
   (setq-local font-lock-defaults '((epics-font-lock-keywords)))
