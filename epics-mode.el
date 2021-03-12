@@ -420,7 +420,11 @@ help buffer."
 (defun epics-add-snippet-to-local-alist-maybe (&optional initial-val return-instead)
   "Prompt user to enter the desired snippet and parse it. Add it
 to the `epics-local-snippet-alist' if RETURN-INSTEAD is nil,
-otherwise return it.
+otherwise return it. User must provide a least an id and record
+type.
+
+If the snippet already exists, notify the user and do not
+proceed.
 
 INITIAL-VAL is a string to be inserted into minibuffer for
 `read-string' function."
@@ -432,9 +436,18 @@ INITIAL-VAL is a string to be inserted into minibuffer for
          (parsed-snippet (cons (car tokenized-snippet)
                                (list (cdr tokenized-snippet)))))
 
-    (if return-instead
-        parsed-snippet
-      (add-to-list 'epics-local-snippet-alist parsed-snippet t))))
+    (if (null (cadr parsed-snippet))
+        (message "You need to provide at least snippet id and record type!")
+
+      (if return-instead
+          parsed-snippet
+        (if (member (assoc (car tokenized-snippet) epics-local-snippet-alist)
+                    epics-local-snippet-alist)
+            (progn
+              (message "Snippet with this id already exists!")
+              (epics-show-local-snippet-alist)
+              (search-forward-regexp (format "%s\""(car tokenized-snippet))))
+          (add-to-list 'epics-local-snippet-alist parsed-snippet t))))))
 
 
 (defun epics-edit-snippet ()
