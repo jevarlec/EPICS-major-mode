@@ -57,6 +57,14 @@ path from environment variables.  Default is 'env'."
                         :value (concat user-emacs-directory "var/epics-mode/"))
                  (directory)))
 
+(defcustom epics-enable-snippets t
+  "Enable snippets if set to non-nil, else disable. Default is t."
+  :group 'epics-config
+  :type '(choice (const :tag "Yes"
+                        :value t)
+                 (const :tag "No"
+                        :value nil)))
+
 (defcustom epics-always-include-desc t
   "If set to non-nil, always add a DESC field when expanding a
   snippet. It is set to t by default."
@@ -886,8 +894,9 @@ type."
   (setq-local indent-line-function #'epics-indent-line)
 
   ;; abbrevs
-  (epics--regenerate-abbrevs-from-snippet-table)
-  (abbrev-mode 1))
+  (when epics-enable-snippets
+    (epics--regenerate-abbrevs-from-snippet-table)
+    (abbrev-mode 1)))
 
 
 (provide 'epics-mode)
