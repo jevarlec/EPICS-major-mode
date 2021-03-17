@@ -49,7 +49,7 @@ path from environment variables.  Default is 'env'."
   :type '(choice (const :tag "From environment variables" :value "env")
                  (directory)))
 
-(defcustom epics-default-var-dir
+(defcustom epics-var-dir
   (concat user-emacs-directory "var/epics-mode/")
   "Default directory used for persistent variables."
   :group 'epics-config
@@ -352,7 +352,7 @@ point is inside a record block."
 ;; abbrev/snippet functions and variables
 (defvar-local epics-active-snippet-alist '()
   "An alist of all snippet definitions.  This is loaded from a
-  file located at `epics-default-var-dir' at start.  Use
+  file located at `epics-var-dir' at start.  Use
   `epics-save-active-snippet-alist' to save the local alist.")
 
 (defconst +epics-factory-default-snippet-table+
@@ -396,13 +396,13 @@ point is inside a record block."
 (defconst +epics-saved-snippets-filename+ "epics-mode-saved-snippets.el"
   "Filename for file containing snippets.")
 
-(defvar-local epics-saved-snippets-file (concat epics-default-var-dir
+(defvar-local epics-saved-snippets-file (concat epics-var-dir
                                                 +epics-saved-snippets-filename+))
 
 
 (defun epics-show-active-snippet-alist (&optional dont-change-focus)
   "Display contents of `epics-active-snippet-alist' in the
-help buffer."
+help buffer. Return the name of the buffer."
 
   (interactive)
 
@@ -428,8 +428,9 @@ help buffer."
 (defun epics-add-snippet-to-active-alist-maybe (&optional initial-val return-instead)
   "Prompt user to enter the desired snippet and parse it. Add it
 to the `epics-active-snippet-alist' if RETURN-INSTEAD is nil,
-otherwise return it. User must provide a least an id and record
-type.
+otherwise return it.
+
+User must provide a least an id and record type when prompted.
 
 If the snippet already exists, notify the user and do not
 proceed.
@@ -455,7 +456,8 @@ INITIAL-VAL is a string to be inserted into minibuffer for
               (message "Snippet with this id already exists!")
               (epics-show-active-snippet-alist)
               (search-forward-regexp (format "%s\""(car tokenized-snippet))))
-          (add-to-list 'epics-active-snippet-alist parsed-snippet t))))))
+          (add-to-list 'epics-active-snippet-alist parsed-snippet t))
+        (epics--regenerate-abbrevs-from-snippet-table)))))
 
 
 (defun epics-edit-snippet ()
@@ -476,7 +478,8 @@ the snippet and allow user to edit it in a minibuffer."
       (setq new-snippet (epics-add-snippet-to-active-alist-maybe snippet-string-to-edit t))
       (when new-snippet
         (epics-remove-snippet snippet-id)
-        (add-to-list 'epics-active-snippet-alist new-snippet t)))
+        (add-to-list 'epics-active-snippet-alist new-snippet t)
+        (epics--regenerate-abbrevs-from-snippet-table)))
 
     (quit-windows-on help-buf)))
 
@@ -501,7 +504,8 @@ SNIPPET-ID-TO-REMOVE is used to delete the snippet."
     (if (null snippet-to-remove)
         (message "Snippet does not exist!")
       (setq-local epics-active-snippet-alist (remove snippet-to-remove
-                                                    epics-active-snippet-alist)))
+                                                     epics-active-snippet-alist))
+      (epics--regenerate-abbrevs-from-snippet-table))
 
     (when help-buf
       (quit-windows-on help-buf))))
@@ -515,12 +519,13 @@ SNIPPET-ID-TO-REMOVE is used to delete the snippet."
          (y-or-n-p "Are you sure you want to clear the local snippet list?")))
 
     (when confirmation
-      (setq-local epics-active-snippet-alist nil))))
+      (setq-local epics-active-snippet-alist nil)
+      (epics--regenerate-abbrevs-from-snippet-table))))
 
 
 (defun epics-save-active-snippet-alist ()
   "Save contents of `epics-active-snippet-alist' to a file located
-in `epics-default-var-dir'."
+in `epics-var-dir'."
 
   (interactive)
   (let ((confirmation
@@ -543,8 +548,11 @@ in `epics-default-var-dir'."
 
     (when confirmation
       (if (file-writable-p epics-saved-snippets-file)
-          (epics--print-data-to-file +epics-factory-default-snippet-table+
-                                     epics-saved-snippets-file)
+          (progn
+            (epics--print-data-to-file +epics-factory-default-snippet-table+
+                                       epics-saved-snippets-file)
+            (epics-load-saved-snippets-to-active-alist)
+            (epics--regenerate-abbrevs-from-snippet-table))
         (message "File not writable: %s" epics-saved-snippets-file)))))
 
 
@@ -873,15 +881,12 @@ type."
   (setq-local epics--actual-base-dir (epics--get-base-dir-string))
   (setq-local epics-active-snippet-alist nil)
 
-  (unless (file-accessible-directory-p epics-default-var-dir)
-    (make-directory epics-default-var-dir))
+  (unless (file-accessible-directory-p epics-var-dir)
+    (make-directory epics-var-dir))
 
   (if (file-exists-p epics-saved-snippets-file)
       (epics-load-saved-snippets-to-active-alist)
-    (message "new file")
-    (epics--print-data-to-file +epics-factory-default-snippet-table+
-                               epics-saved-snippets-file)
-    (epics-load-saved-snippets-to-active-alist))
+    (epics-restore-default-snippet-table))
 
   ;; enable syntax highlighting
   (setq-local font-lock-defaults '((epics-font-lock-keywords)))
