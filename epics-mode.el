@@ -202,50 +202,50 @@ it does not search the comments or strings."
           (t point-after-search))))
 
 
-(defun epics--copy-string-at-hook (hook del1 del2)
+(defun epics--copy-string-at-word (word del1 del2)
   "Yanks the string located between DEL1 and DEL2, forward of
-HOOK.  All inputs should be strings, returns the string or nil if
+WORD.  All inputs are strings, return the string or nil if
 no match."
 
-  (let (p1 p2 string)
+  (let (p1 p2 return-string)
 
     (save-excursion
       (beginning-of-line)
       (skip-chars-forward " \t")
-      (if (not (equal (current-word) hook))
+      (if (not (equal (current-word) word))
           nil
         (skip-chars-forward (concat "^" del1 "\n"))
         (forward-char)
         (setq p1 (point))
         (skip-chars-forward (concat "^" del2 " .\n"))
-        (when (equal (following-char) "\"")
+        (when (equal (following-char) del2)
           (backward-char))
         (setq p2 (point))
         (save-excursion
           (goto-char (point-min))
-          (setq string (buffer-substring-no-properties p1 p2)))
-        string))))
+          (setq return-string (buffer-substring-no-properties p1 p2)))
+        return-string))))
 
 
 (defun epics--get-filenames-in-dir (dir &optional regex)
   "Return a list of files present in DIR.  Optionally provide a
-REGEX string to filter files."
+REGEX string to filter files. DIR is a string."
 
   (directory-files dir nil regex))
 
 
-(defun epics--get-parent-record-string-maybe (del1 del2)
+(defun epics--get-parent-record-string (del1 del2)
   "Return string between DEL1 and DEL2 pertaining to the record
-if point inside record block, nil if not."
+if point inside record block, nil if not. DEL1 and DEL2 are strings."
 
   (save-excursion
     (beginning-of-line)
     (unless (epics--blank-line-p)
       (skip-chars-forward " \t")
-      (cond ((epics--string-on-line-p "record") (epics--copy-string-at-hook "record" del1 del2))
+      (cond ((epics--string-on-line-p "record") (epics--copy-string-at-word "record" del1 del2))
             ((epics--inside-record-block-p nil)
              (search-backward "record")
-             (epics--copy-string-at-hook "record" del1 del2))
+             (epics--copy-string-at-word "record" del1 del2))
             (t nil)))))
 
 
@@ -336,14 +336,17 @@ point is inside a record block."
 
 
 (defun epics--print-data-to-file (data filename)
-  "Write DATA as lisp object to file FILENAME."
+  "Write DATA as lisp object to file FILENAME. DATA can be any
+symbol or sexpression, FILENAME is a string."
 
   (with-temp-file filename
     (prin1 data (current-buffer))))
 
 
 (defun epics--read-data-from-file (filename)
-  "Read and return lisp objects from file FILENAME."
+  "Read and return lisp objects from file FILENAME, which is a
+string."
+
   (with-temp-buffer
     (insert-file-contents filename)
     (read (current-buffer))))
@@ -402,7 +405,10 @@ point is inside a record block."
 
 (defun epics-show-active-snippet-alist (&optional dont-change-focus)
   "Display contents of `epics-active-snippet-alist' in the
-help buffer. Return the name of the buffer."
+help buffer. Return the name of the buffer.
+
+If DONT-CHANGE-FOCUS is non-nil, the focus remains in the window
+where point is at the time of the call."
 
   (interactive)
 
@@ -489,7 +495,7 @@ the snippet and allow user to edit it in a minibuffer."
 remove it from `epics-active-snippet-alist'.
 
 SNIPPET-ID-TO-REMOVE is a string containing the snippet id. If
-nil, then the above mentioned procedure of prompting the user is
+nil (which is default), then the above mentioned procedure of prompting the user is
 executed. If not nil, then prompting is skipped and
 SNIPPET-ID-TO-REMOVE is used to delete the snippet."
 
@@ -498,9 +504,8 @@ SNIPPET-ID-TO-REMOVE is used to delete the snippet."
          (snippet-id-to-remove (if snippet-id-to-remove
                                    snippet-id-to-remove
                                  (read-string "Enter the id of the snippet you wish to remove: ")))
-         (snippet-to-remove nil))
+         (snippet-to-remove (assoc snippet-id-to-remove epics-active-snippet-alist)))
 
-    (setq snippet-to-remove (assoc snippet-id-to-remove epics-active-snippet-alist))
     (if (null snippet-to-remove)
         (message "Snippet does not exist!")
       (setq-local epics-active-snippet-alist (remove snippet-to-remove
@@ -524,12 +529,12 @@ SNIPPET-ID-TO-REMOVE is used to delete the snippet."
 
 
 (defun epics-save-active-snippet-alist ()
-  "Save contents of `epics-active-snippet-alist' to a file located
-in `epics-var-dir'."
+  "Save contents of `epics-active-snippet-alist' to
+`epics-saved-snippets-file' located in `epics-var-dir'."
 
   (interactive)
   (let ((confirmation
-         (y-or-n-p "Are you sure you want to save the local snippets as default?")))
+         (y-or-n-p "Are you sure you want to save the local snippets?")))
 
     (when confirmation
       (if (file-writable-p epics-saved-snippets-file)
@@ -539,8 +544,8 @@ in `epics-var-dir'."
 
 
 (defun epics-restore-default-snippet-table ()
-  "Restores the factory default snippet table
-  `epics-default-snippet-table'."
+  "Restore the `+epics-factory-default-snippet-table+' to
+`epics-saved-snippets-file' and regenerate abbrevs."
 
   (interactive)
   (let ((confirmation
@@ -557,7 +562,7 @@ in `epics-var-dir'."
 
 
 (defun epics-load-saved-snippets-to-active-alist ()
-  "Load contents of `+epics-saved-snippets-filename+'to
+  "Load contents of `epics-saved-snippets-file' to
 `epics-active-snippet-alist'."
 
   (interactive)
@@ -569,10 +574,14 @@ in `epics-var-dir'."
 
 (defun epics--create-abbrev (snippet)
   "Call `define-abbrev' using SNIPPET as arguments. The function
-that does insertion of abbrev is `epics--insert-abbrev-string'."
+that does insertion of abbrev is `epics--insert-abbrev-string'.
+
+SNIPPET is a list, usually an element from
+`epics-save-active-snippet-alist' with the following form:
+'(id (type field1 field2 ... fieldN))"
 
   (let ((snippet-id (car snippet))
-        (snippet-body (cdr snippet)))
+        (snippet-body (cadr snippet)))
 
     (define-abbrev
       epics-mode-abbrev-table
@@ -585,14 +594,19 @@ that does insertion of abbrev is `epics--insert-abbrev-string'."
 
 (defun epics-abbrev-enable-func ()
   "Return t when point is not inside a record block, comment, or
-string."
+string. This function's intended use is to enable abbrev
+expansion."
+
   (not (or (epics--inside-record-block-p)
            (epics--inside-comment-string-p))))
 
 
 (defun epics--insert-format-repos-abbrev-string (snippet-body)
-  "Expand, insert and format the abbrev using SNIPPET-BODY, then
-reposition the point inside string delimiters."
+  "Expand, insert, and format the abbrev using SNIPPET-BODY, then
+reposition the point inside string delimiters.
+
+SNIPPET-BODY is a list with the form '(type field1 field2
+... fieldN)"
 
   (save-excursion
     (previous-line)
@@ -611,10 +625,11 @@ reposition the point inside string delimiters."
 
 
 (defun epics--create-abbrev-expansion-string (snippet-body)
-  "Create and return the expansion string using SNIPPET-BODY."
+  "Create and return the expansion string using SNIPPET-BODY,
+which is a list with the form '(type field1 field2 ... fieldN)"
 
-  (let ((record-type (caar snippet-body))
-        (record-metadata (cdar snippet-body)))
+  (let ((record-type (car snippet-body))
+        (record-metadata (cdr snippet-body)))
 
     (format "record(%s, \"\") {%s"
             record-type
@@ -622,8 +637,9 @@ reposition the point inside string delimiters."
 
 
 (defun epics--expand-record-body (record-metadata)
-  "Create and return the formatted string from RECORD-METADATA
-which should be a list."
+  "Create and return the formatted string from RECORD-METADATA,
+which should be a list with the form '(field1 field2
+... fieldN)."
 
   (defun accum (record-metadata result)
     (if (null (car record-metadata))
@@ -641,7 +657,8 @@ which should be a list."
 
 
 (defun epics--generate-abbrevs-from-snippet-table (table)
-  "Create abbrev definitions for all snippets in TABLE."
+  "Create abbrev definitions for all snippets in TABLE, which is
+an alist, usually `epics-active-snippet-alist'."
 
   (if (null (car table))
       t
@@ -701,7 +718,7 @@ it in a help buffer."
   "Open the record reference for the record at point."
 
   (interactive)
-  (let ((record (epics--get-parent-record-string-maybe "(" ",")))
+  (let ((record (epics--get-parent-record-string "(" ",")))
     (if (null record)
         (message "Point not in record!")
       (epics--render-help-file (concat epics--actual-base-dir
@@ -734,8 +751,9 @@ return to it."
 it."
 
   (interactive)
-  (let ((link (epics--copy-string-at-hook "field" "\"" "\""))
+  (let ((link (epics--copy-string-at-word "field" "\"" "\""))
         (pos nil))
+
     (save-excursion
       (goto-char (point-min))
       (setq pos (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" link)
@@ -744,8 +762,8 @@ it."
     (if (null pos)
         (message "Not a link or record not found.")
       (unless (equal (car epics-followed-links-history)
-                     (epics--get-parent-record-string-maybe "\"" "\""))
-        (setq epics-followed-links-history (cons (epics--get-parent-record-string-maybe "\"" "\"")
+                     (epics--get-parent-record-string "\"" "\""))
+        (setq epics-followed-links-history (cons (epics--get-parent-record-string "\"" "\"")
                                                  epics-followed-links-history)))
       (goto-char pos)
       (message "Following %s" link))))
