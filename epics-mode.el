@@ -4,7 +4,7 @@
 
 ;; Author: Jernej Varlec <jernej@varlec.si>
 ;; Keywords: elisp, epics
-;; Version: 0.5.1
+;; Version: 0.6.0
 
 ;; This file is not part of GNU Emacs.
 
@@ -882,14 +882,25 @@ type."
 (defvar epics-mode-map nil "Keymap for epics-mode")
 (progn
   (setq epics-mode-map (make-sparse-keymap))
-  (define-key epics-mode-map (kbd "C-c C-'") #'epics-follow-link)
-  (define-key epics-mode-map (kbd "C-c C-;") #'epics-retrace-link)
+  ;; help
   (define-key epics-mode-map (kbd "C-c h r") #'epics-describe-record)
   (define-key epics-mode-map (kbd "C-c h h") #'epics-open-reference)
+  ;; navigation
+  (define-key epics-mode-map (kbd "C-c C-'") #'epics-follow-link)
+  (define-key epics-mode-map (kbd "C-c C-;") #'epics-retrace-link)
   (define-key epics-mode-map (kbd "C-c C-j") #'epics-next-value)
   (define-key epics-mode-map (kbd "C-c C-k") #'epics-previous-value)
   (define-key epics-mode-map (kbd "C-c C-l") #'epics-next-record)
-  (define-key epics-mode-map (kbd "C-c C-h") #'epics-previous-record))
+  (define-key epics-mode-map (kbd "C-c C-h") #'epics-previous-record)
+  ;; snippets
+  (define-key epics-mode-map (kbd "C-c s s") #'epics-show-active-snippet-alist)
+  (define-key epics-mode-map (kbd "C-c s a") #'epics-add-snippet-to-active-alist-maybe)
+  (define-key epics-mode-map (kbd "C-c s e") #'epics-edit-snippet)
+  (define-key epics-mode-map (kbd "C-c s d") #'epics-remove-snippet)
+  (define-key epics-mode-map (kbd "C-c s w") #'epics-save-active-snippet-alist)
+  (define-key epics-mode-map (kbd "C-c s c") #'epics-clear-active-snippet-alist)
+  (define-key epics-mode-map (kbd "C-c s r") #'epics-restore-default-snippet-table)
+  (define-key epics-mode-map (kbd "C-c s l") #'epics-load-saved-snippets-to-active-alist))
 
 
 (define-derived-mode epics-mode prog-mode "EPICS"

@@ -1,10 +1,19 @@
 # Changelog - EPICS Major Mode for Emacs
+## [0.6.0] - 2021.03.18
+### Added
+- Functions and commands for creating, editing and saving snippets
+- epics-var-dir where persistent variables are saved
+### Fixed
+- Updated mode description
+- Some docstrings were missing type information
+### Changed
+- Fixed inconsistent mode naming
+
 ## [0.5.1] - 2021.02.04
 ### Added
 - epics-next-record and epics-previous-record commands facilitate navigation between record blocks
 - epics-next-value and epics-previous-value facilitate navigation between values
 - A lot of internal utility functions
-
 ### Fixed
 - Some themes were not completely compatible with syntax colouring
 
