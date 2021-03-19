@@ -138,6 +138,18 @@ path from environment variables.  Default is 'env'."
       nil)))
 
 
+(defun epics--position-at-next-blank-line ()
+  "Position the point at the next blank line and return t when
+  successful."
+
+  (interactive)
+  (if (or (epics--blank-line-p)
+          (= (point) (point-max)))
+      t
+    (forward-line)
+    (epics--position-at-next-blank-line)))
+
+
 (defun epics--get-base-dir-string ()
   "Return validated base dir string for use in other functions."
 
@@ -609,6 +621,8 @@ reposition the point inside string delimiters.
 
 SNIPPET-BODY is a list with the form '(type field1 field2
 ... fieldN)"
+
+  (epics--position-at-next-blank-line)
 
   (save-excursion
     (previous-line)
