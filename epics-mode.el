@@ -189,7 +189,9 @@ it does not search the comments or strings."
 
   (let ((point-after-search (funcall search-func string nil t nil)))
 
-    (cond ((epics--inside-comment-p)
+    (cond ((null point-after-search) nil)
+
+          ((epics--inside-comment-p)
            (if inside-comments
                point-after-search
              (epics--search-with search-func string inside-strings inside-comments)))
