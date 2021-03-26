@@ -927,7 +927,7 @@ type."
   (setq-local epics-active-snippet-alist nil)
 
   (unless (file-accessible-directory-p epics-var-dir)
-    (make-directory epics-var-dir))
+    (make-directory epics-var-dir t))
 
   (if (file-exists-p epics-saved-snippets-file)
       (epics-load-saved-snippets-to-active-alist)
