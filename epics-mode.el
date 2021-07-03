@@ -57,14 +57,6 @@ path from environment variables.  Default is 'env'."
                         :value (concat user-emacs-directory "var/epics-mode/"))
                  (directory)))
 
-(defcustom epics-enable-snippets t
-  "Enable snippets if set to non-nil, else disable. Default is t."
-  :group 'epics-config
-  :type '(choice (const :tag "Yes"
-                        :value t)
-                 (const :tag "No"
-                        :value nil)))
-
 (defcustom epics-always-include-desc t
   "If set to non-nil, always add a DESC field when expanding a
   snippet. It is set to t by default."
@@ -157,12 +149,15 @@ path from environment variables.  Default is 'env'."
                   (getenv "EPICS_BASE")
                 epics-path-to-base)))
 
-    (if (file-directory-p path)
-        (progn
-          (if (string-suffix-p "/" path)
-              path
-            (concat path "/")))
-      (message "Invalid base path set: %s" epics-path-to-base))))
+    (if path
+        (if (file-directory-p path)
+            (progn
+              (if (string-suffix-p "/" path)
+                  path
+                (concat path "/")))
+          (message "Invalid base path set: %s" epics-path-to-base))
+      (message "EPICS base not found")
+      nil)))
 
 
 (defun epics--string-on-line-p (string &optional inside-strings)
@@ -366,329 +361,51 @@ string."
     (read (current-buffer))))
 
 
-;; abbrev/snippet functions and variables
-(defvar-local epics-active-snippet-alist '()
-  "An alist of all snippet definitions.  This is loaded from a
-  file located at `epics-var-dir' at start.  Use
-  `epics-save-active-snippet-alist' to save the local alist.")
-
-(defconst +epics-factory-default-snippet-table+
-  '((";ai" ("ai" "dtyp" "egu" "inp"))
-    (";aai" ("aai" "dtyp" "egu" "inp" "nelm" "ftvl"))
-    (";ao" ("ao" "dtyp" "out" "drvh" "drvl"))
-    (";aao" ("aao" "dtyp" "out" "nelm" "ftvl"))
-    (";asub" ("aSub" "snam" "inpa" "fta" "noa"))
-    (";bi" ("bi" "dtyp" "inp" "znam" "onam"))
-    (";bo" ("bo" "dtyp" "out" "znam" "onam"))
-    (";calcout" ("calcout" "calc" "inpa"))
-    (";calc" ("calc" "calc" "inpa"))
-    (";compress" ("compress" "inp" "alg" "nsam"))
-    (";dfanout" ("dfanout"))
-    (";event" ("event" "dtyp" "inp"))
-    (";fanout" ("fanout"))
-    (";histogram" ("histogram" "dtyp" "svl" "nelm" "ulim" "llim"))
-    (";int64in" ("int64in" "dtyp" "egu" "inp"))
-    (";int64out" ("int64out" "dtyp" "out" "drvh" "drvl"))
-    (";longin" ("longin" "dtyp" "egu" "inp"))
-    (";longout" ("longout" "dtyp" "out" "drvh" "drvl"))
-    (";lsi" ("lsi" "dtyp" "sizv" "inp"))
-    (";lso" ("lso" "dtyp" "sizv" "out"))
-    (";mbbi" ("mbbi" "dtyp" "inp" "zrvl" "zrst"))
-    (";mbbid" ("mbbiDirect" "dtyp" "inp" "b0"))
-    (";mbbo" ("mbbo" "dtyp" "out" "zrvl" "zrst"))
-    (";mbbod" ("mbboDirect" "dtyp" "out" "b0"))
-    (";permissive" ("permissive" "wflg" "labl"))
-    (";printf" ("printf" "sizv" "len" "fmt" "out" "inp0"))
-    (";sel" ("sel" "selm" "seln" "nvl"))
-    (";seq" ("seq" "selm" "seln" "dol0" "lnk0"))
-    (";state" ("state"))
-    (";stringin" ("stringin" "dtyp" "inp"))
-    (";stringout" ("stringout" "dtyp" "out"))
-    (";subarray" ("subArray" "dtyp" "inp" "ftvl" "malm" "indx"))
-    (";sub" ("sub" "snam" "inpa"))
-    (";waveform" ("waveform" "dtyp" "egu" "inp" "ftvl")))
-  "This alist is a factory default should the user want to reset
-  his `epics-saved-snippets-file'.")
-
-(defconst +epics-saved-snippets-filename+ "epics-mode-saved-snippets.el"
-  "Filename for file containing snippets.")
-
-(defvar-local epics-saved-snippets-file (concat epics-var-dir
-                                                +epics-saved-snippets-filename+))
-
-
-(defun epics-show-active-snippet-alist (&optional dont-change-focus)
-  "Display contents of `epics-active-snippet-alist' in the
-help buffer. Return the name of the buffer.
-
-If DONT-CHANGE-FOCUS is non-nil, the focus remains in the window
-where point is at the time of the call."
-
+;; record adding/deleting
+(defun epics-add-record ()
+  ""
   (interactive)
 
-  (defun print-snippets (snippets)
-    (if (null snippets)
-        t
-      (prin1 (car snippets) (current-buffer))
-      (insert "\n")
-      (print-snippets (cdr snippets))))
+  (when (= 0 (buffer-size))
+    (insert "\n")
+    (beginning-of-buffer))
 
-  (let ((buf-name "Local Snippets")
-        (original-buf (current-buffer))
-        (snippets-to-print epics-active-snippet-alist))
+  (when (epics--inside-record-block-p)
+      (progn
+        (epics--search-forward "}")
+        (insert "\n")))
 
-    (with-output-to-temp-buffer buf-name
-      (switch-to-buffer-other-window buf-name)
-      (print-snippets snippets-to-print)
-      (when dont-change-focus
-        (switch-to-buffer-other-window original-buf)))
-    buf-name))
+  (when (< 1 (line-number-at-pos))
+    (save-excursion
+      (previous-line)
+      (unless (epics--blank-line-p)
+        (end-of-line)
+        (insert "\n"))))
 
-
-(defun epics-add-snippet-to-active-alist-maybe (&optional initial-val return-instead)
-  "Prompt user to enter the desired snippet and parse it. Add it
-to the `epics-active-snippet-alist' if RETURN-INSTEAD is nil,
-otherwise return it.
-
-User must provide a least an id and record type when prompted.
-
-If the snippet already exists, notify the user and do not
-proceed.
-
-INITIAL-VAL is a string to be inserted into minibuffer for
-`read-string' function."
-
-  (interactive)
-  (let* ((snippet-to-add
-          (read-string "Enter the desired snippet in the following form: id record-type field1 field2 .... fieldN: " initial-val))
-         (tokenized-snippet (split-string (format "%s" snippet-to-add)))
-         (parsed-snippet (cons (car tokenized-snippet)
-                               (list (cdr tokenized-snippet)))))
-
-    (if (null (cadr parsed-snippet))
-        (message "You need to provide at least snippet id and record type!")
-
-      (if return-instead
-          parsed-snippet
-        (if (member (assoc (car tokenized-snippet) epics-active-snippet-alist)
-                    epics-active-snippet-alist)
-            (progn
-              (message "Snippet with this id already exists!")
-              (epics-show-active-snippet-alist)
-              (search-forward-regexp (format "%s\""(car tokenized-snippet))))
-          (add-to-list 'epics-active-snippet-alist parsed-snippet t))
-        (epics--regenerate-abbrevs-from-snippet-table)))))
-
-
-(defun epics-edit-snippet ()
-  "Prompt user to enter the id of the snippet to edit, then fetch
-the snippet and allow user to edit it in a minibuffer."
-
-  (interactive)
-  (let* ((help-buf (epics-show-active-snippet-alist t))
-         (snippet-id
-          (read-string "Enter the id of the snippet you wish to edit: "))
-         (fetched-snippet (flatten-list (assoc snippet-id
-                                               epics-active-snippet-alist)))
-         (snippet-string-to-edit (mapconcat #'identity fetched-snippet " "))
-         (new-snippet nil))
-
-    (if (null fetched-snippet)
-        (message "Snippet does not exist!")
-      (setq new-snippet (epics-add-snippet-to-active-alist-maybe snippet-string-to-edit t))
-      (when new-snippet
-        (epics-remove-snippet snippet-id)
-        (add-to-list 'epics-active-snippet-alist new-snippet t)
-        (epics--regenerate-abbrevs-from-snippet-table)))
-
-    (quit-windows-on help-buf)))
-
-
-(defun epics-remove-snippet (&optional snippet-id-to-remove)
-  "Prompt user to enter the id of the snippet to remove, then
-remove it from `epics-active-snippet-alist'.
-
-SNIPPET-ID-TO-REMOVE is a string containing the snippet id. If
-nil (which is default), then the above mentioned procedure of prompting the user is
-executed. If not nil, then prompting is skipped and
-SNIPPET-ID-TO-REMOVE is used to delete the snippet."
-
-  (interactive)
-  (let* ((help-buf (unless snippet-id-to-remove (epics-show-active-snippet-alist t)))
-         (snippet-id-to-remove (if snippet-id-to-remove
-                                   snippet-id-to-remove
-                                 (read-string "Enter the id of the snippet you wish to remove: ")))
-         (snippet-to-remove (assoc snippet-id-to-remove epics-active-snippet-alist)))
-
-    (if (null snippet-to-remove)
-        (message "Snippet does not exist!")
-      (setq-local epics-active-snippet-alist (remove snippet-to-remove
-                                                     epics-active-snippet-alist))
-      (epics--regenerate-abbrevs-from-snippet-table))
-
-    (when help-buf
-      (quit-windows-on help-buf))))
-
-
-(defun epics-clear-active-snippet-alist ()
-  "Clear all snippets from `epics-active-snippet-alist'."
-
-  (interactive)
-  (let ((confirmation
-         (y-or-n-p "Are you sure you want to clear the local snippet list?")))
-
-    (when confirmation
-      (setq-local epics-active-snippet-alist nil)
-      (epics--regenerate-abbrevs-from-snippet-table))))
-
-
-(defun epics-save-active-snippet-alist ()
-  "Save contents of `epics-active-snippet-alist' to
-`epics-saved-snippets-file' located in `epics-var-dir'."
-
-  (interactive)
-  (let ((confirmation
-         (y-or-n-p "Are you sure you want to save the local snippets?")))
-
-    (when confirmation
-      (if (file-writable-p epics-saved-snippets-file)
-          (epics--print-data-to-file epics-active-snippet-alist
-                                     epics-saved-snippets-file)
-        (message "File not writable: %s" epics-saved-snippets-file)))))
-
-
-(defun epics-restore-default-snippet-table ()
-  "Restore the `+epics-factory-default-snippet-table+' to
-`epics-saved-snippets-file' and regenerate abbrevs."
-
-  (interactive)
-  (let ((confirmation
-         (y-or-n-p "Are you sure you want to restore factory default snippet table?")))
-
-    (when confirmation
-      (if (file-writable-p epics-saved-snippets-file)
-          (progn
-            (epics--print-data-to-file +epics-factory-default-snippet-table+
-                                       epics-saved-snippets-file)
-            (epics-load-saved-snippets-to-active-alist)
-            (epics--regenerate-abbrevs-from-snippet-table))
-        (message "File not writable: %s" epics-saved-snippets-file)))))
-
-
-(defun epics-load-saved-snippets-to-active-alist ()
-  "Load contents of `epics-saved-snippets-file' to
-`epics-active-snippet-alist'."
-
-  (interactive)
-  (if (file-readable-p epics-saved-snippets-file)
-      (setq-local epics-active-snippet-alist
-                  (epics--read-data-from-file epics-saved-snippets-file))
-    (message "File not readable: %s" epics-saved-snippets-file)))
-
-
-(defun epics--create-abbrev (snippet)
-  "Call `define-abbrev' using SNIPPET as arguments. The function
-that does insertion of abbrev is `epics--insert-abbrev-string'.
-
-SNIPPET is a list, usually an element from
-`epics-save-active-snippet-alist' with the following form:
-'(id (type field1 field2 ... fieldN))"
-
-  (let ((snippet-id (car snippet))
-        (snippet-body (cadr snippet)))
-
-    (define-abbrev
-      epics-mode-abbrev-table
-      (format "%s" snippet-id)
-      ""
-      (lambda () (epics--insert-format-repos-abbrev-string snippet-body))
-      :enable-function #'epics-abbrev-enable-func
-      :system t)))
-
-
-(defun epics-abbrev-enable-func ()
-  "Return t when point is not inside a record block, comment, or
-string. This function's intended use is to enable abbrev
-expansion."
-
-  (not (or (epics--inside-record-block-p)
-           (epics--inside-comment-string-p))))
-
-
-(defun epics--insert-format-repos-abbrev-string (snippet-body)
-  "Expand, insert, and format the abbrev using SNIPPET-BODY, then
-reposition the point inside string delimiters.
-
-SNIPPET-BODY is a list with the form '(type field1 field2
-... fieldN)"
-
-  (epics--position-at-next-blank-line)
+  (insert "record(, \"\") {\n")
+  (when epics-always-include-desc
+    (insert "field(DESC, \"\")\n"))
+  (when epics-always-include-scan
+    (insert "field(SCAN, \"\")\n"))
+  (insert "}")
 
   (save-excursion
-    (previous-line)
+    (next-line)
     (unless (epics--blank-line-p)
+      (previous-line)
       (end-of-line)
       (insert "\n")))
-
-  (insert (epics--create-abbrev-expansion-string snippet-body) "\n")
 
   (let ((p1 (point))
         (p2 (epics--search-backward "record")))
     (indent-region p2 p1))
 
-  (epics--position-point-at-value)
-  (signal 'quit nil))
-
-
-(defun epics--create-abbrev-expansion-string (snippet-body)
-  "Create and return the expansion string using SNIPPET-BODY,
-which is a list with the form '(type field1 field2 ... fieldN)"
-
-  (let ((record-type (car snippet-body))
-        (record-metadata (cdr snippet-body)))
-
-    (format "record(%s, \"\") {%s"
-            record-type
-            (epics--expand-record-body record-metadata))))
-
-
-(defun epics--expand-record-body (record-metadata)
-  "Create and return the formatted string from RECORD-METADATA,
-which should be a list with the form '(field1 field2
-... fieldN)."
-
-  (defun accum (record-metadata result)
-    (if (null (car record-metadata))
-        (format "%s\n}" result)
-      (accum (cdr record-metadata)
-             (concat result (format "\nfield(%s, \"\")"
-                                    (upcase (car record-metadata)))))))
-
-  (when epics-always-include-scan
-    (setq record-metadata (cons "scan" record-metadata)))
-  (when epics-always-include-desc
-    (setq record-metadata (cons "desc" record-metadata)))
-
-  (accum record-metadata ""))
-
-
-(defun epics--generate-abbrevs-from-snippet-table (table)
-  "Create abbrev definitions for all snippets in TABLE, which is
-an alist, usually `epics-active-snippet-alist'."
-
-  (if (null (car table))
-      t
-    (epics--create-abbrev (car table))
-    (epics--generate-abbrevs-from-snippet-table (cdr table))))
-
-
-(defun epics--regenerate-abbrevs-from-snippet-table ()
-  "Clear current `epics-mode-abbrev-table' and regenerate new
-abbrevs from `epics-active-snippet-alist'."
-
-  (clear-abbrev-table epics-mode-abbrev-table)
-  (setq abbrevs-changed nil)  ; we want to use epics-save-active-snippet-alist for saving abbrevs
-  (epics--generate-abbrevs-from-snippet-table epics-active-snippet-alist))
+  (epics--search-forward "("))
+  
+    
+    
+;; (defun epics-delete-record)
+;; (defun epics-insert-field)
 
 
 ;; epics reference functions
@@ -907,16 +624,7 @@ type."
   (define-key epics-mode-map (kbd "C-c C-j") #'epics-next-value)
   (define-key epics-mode-map (kbd "C-c C-k") #'epics-previous-value)
   (define-key epics-mode-map (kbd "C-c C-l") #'epics-next-record)
-  (define-key epics-mode-map (kbd "C-c C-h") #'epics-previous-record)
-  ;; snippets
-  (define-key epics-mode-map (kbd "C-c s s") #'epics-show-active-snippet-alist)
-  (define-key epics-mode-map (kbd "C-c s a") #'epics-add-snippet-to-active-alist-maybe)
-  (define-key epics-mode-map (kbd "C-c s e") #'epics-edit-snippet)
-  (define-key epics-mode-map (kbd "C-c s d") #'epics-remove-snippet)
-  (define-key epics-mode-map (kbd "C-c s w") #'epics-save-active-snippet-alist)
-  (define-key epics-mode-map (kbd "C-c s c") #'epics-clear-active-snippet-alist)
-  (define-key epics-mode-map (kbd "C-c s r") #'epics-restore-default-snippet-table)
-  (define-key epics-mode-map (kbd "C-c s l") #'epics-load-saved-snippets-to-active-alist))
+  (define-key epics-mode-map (kbd "C-c C-h") #'epics-previous-record))
 
 
 (define-derived-mode epics-mode prog-mode "EPICS"
@@ -924,14 +632,9 @@ type."
 
   ;; initial setup
   (setq-local epics--actual-base-dir (epics--get-base-dir-string))
-  (setq-local epics-active-snippet-alist nil)
 
   (unless (file-accessible-directory-p epics-var-dir)
     (make-directory epics-var-dir t))
-
-  (if (file-exists-p epics-saved-snippets-file)
-      (epics-load-saved-snippets-to-active-alist)
-    (epics-restore-default-snippet-table))
 
   ;; enable syntax highlighting
   (setq-local font-lock-defaults '((epics-font-lock-keywords)))
@@ -941,12 +644,7 @@ type."
   (setq-local comment-end "")
 
   ;; epics indentation function
-  (setq-local indent-line-function #'epics-indent-line)
-
-  ;; abbrevs
-  (when epics-enable-snippets
-    (epics--regenerate-abbrevs-from-snippet-table)
-    (abbrev-mode 1)))
+  (setq-local indent-line-function #'epics-indent-line))
 
 
 (provide 'epics-mode)
