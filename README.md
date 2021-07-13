@@ -2,7 +2,7 @@
 
 Author: Jernej Varlec
 
-Version: 0.6.0
+Version: 0.6.1
 
 ## Installation, Updating and Uninstallation
 
@@ -44,9 +44,9 @@ You can follow the link fields if they point to a record. This provides quick na
 
 You can also quickly navigate between records and values.
 
-### Code Snippets
+### Add/Remove Records
 
-Commands are provided to create, modify and remove snippets.
+Commands are provided for adding and removing records.
 
 ## Customization
 
@@ -55,15 +55,14 @@ You can modify settings by using Emacs customization interface (`M-x Customize`)
 * `epics-indent-spaces` - How many spaces should the indentation engine do when indenting. Default value is 4.
 * `epics-path-to-base` - Where the base/ folder is located. If set to "From environment variable", then epics-mode will attempt to get the path from environment variable 'EPICS_BASE'. Other choice is to provide a directory. Please note that you have to run `M-x epics-mode` after any changes. Default value is "From environment variable".
 * `epics-var-dir` - Desired location for persistent variables. Default is "user-emacs-directory/var/epics-mode", where *user-emacs-directory* is usually "~/.emacs.d/".
-* `epics-enable-snippets` - Allow expansion of snippets if set to "Yes".
-* `epics-always-include-desc` - Always add DESC field when expanding a snippet if set to "Yes".
-* `epics-always-include-scan` - Always add SCAN field when expanding a snippet if set to "Yes".
+* `epics-always-include-desc` - Always add DESC field when adding records if set to "Yes".
+* `epics-always-include-scan` - Always add SCAN field when adding records if set to "Yes".
 
 ## Using the Help Buffer
 
 You can conveniently access the reference files located in your EPICS base/html directory by using the 'epics-open-reference' (`C-c h h`). This will present you with a prompt where it will ask you to provide a file name. Note that the prompt is semi intelligent and will narrow down your options as you type. Press `tab` to display all your options.
 
-You can also open record reference directly by using 'epics-describe-record' (`C-c h r`) while the cursor (more ofter refered to as 'point') is located inside the record block.
+You can also open record reference directly by using 'epics-describe-record' (`C-c h r`) while the cursor (more often refered to as 'point') is located inside the record block.
 
 Press `q` to close the help buffer after you are done using it.
 
@@ -79,53 +78,17 @@ The mode provides two commands that allow you to quickly navigate between linked
 
 These commands are (for now at least) not aware of records residing in a different database file.
 
-## Using Snippets
+## Using Add/Remove Record Commands
 
-To use the snippets facility, ensure that `epics-enable-snippets` is set to "Yes". You should use `M-x epics-mode` after changing this variable.
+### Adding Records
 
-Snippets have the following form:
-```
-snippet-id record-type field1 field2 ... fieldN
-```
-For example: `;calc calc desc scan calc inpa inpb`, where *;calc* is the id, *calc* the record type, etc.
+Use 'epics-add-record' (`C-c a`) to add the record near point. If point is inside another record, try to add a new record after it. For now the command will not work if point is inside a comment that begins at the beginning of the line.
 
-To insert a snippet, one would simply write the snippet-id (for example *;calc*) in the buffer and press space, enter, or tab. The above example would expand into:
-```
-record(calc, "") {
-    field(DESC, "")
-    field(SCAN, "")
-    field(CALC, "")
-    field(INPA, "")
-    field(INPB, "")
-}
-```
-You could then use the 'epics-next-value' and 'epics-previous-value' to navigate between the values.
+If 'epics-always-include-desc' or 'epics-always-include-scan' are set to t, DESC and SCAN fields are automatically added to the record body.
 
-### Displaying Available Snippets
+### Removing Records
 
-Invoking 'epics-show-active-snippet-alist' (`C-c s s`) will display what snippets are available to be used. This buffer is also shown when editing or removing snippets, so it provides reference.
-
-### Adding, Editing, and Removing Snippets
-
-New snippet forms can be defined using 'epics-add-snippet-to-active-alist-maybe' (`C-c s a`). You will be asked to input the desired form, for example *;ai ai dtyp inp hopr lopr*, where ";ai" is the snippet id (this is used to identify which form to expand), "ai" is the record type, and the rest are the fields. The number of fields is not limited.
-
-Using 'epics-edit-snippet' (`C-c s e`) will prompt for the snippet-id, which is used to identify which snippet to edit. The snippet is then fetched to the minibuffer where it can be edited.
-
-'epics-remove-snippet' (`C-c s d`) will prompt for the snippet-id, which is used to identify which snippet to remove. The snippet is then removed from the table.
-
-To remove all snippets, use 'epics-clear-active-snippet-alist'.
-
-### Saving and Loading Snippets
-
-You can save the snippets to 'epics-saved-snippets-file' located in 'epics-var-dir' by using 'epics-save-active-snippet-alist' (`C-c s w`). 
-
-You can also load the saved snippets from the 'epics-saved-snippets-file' with 'epics-load-saved-snippets-to-active-alist' (`C-c s l`).
-
-### Factory Default Snippet Table
-
-A default snippet table is provided as an example. It is automatically saved to the 'epics-saved-snippets-file', so the user can add to in, edit it, or overwrite it completely. You can decide at any point to restore the original table to the file by using 'epics-restore-default-snippet-table' (`C-c s r`).
-
-This default table is also used at the first run of the mode when the initial snippet file is created and populated.
+Use 'epics-delete-record' (`C-c d`) to remove the record at point. The command only works with point inside a record.
 
 ## Keymaps
 
@@ -143,13 +106,7 @@ All keymaps can be displayed with `C-h m`. You can also display help for any com
 * `C-c C-j` - epics-next-value: Put point at the next value
 * `C-c C-k` - epics-previous-value: Put point at the previous value
 
-### Snippets
-* `C-c s s`- epics-show-active-snippet-alist: Display snippet alist in the help buffer
-* `C-c s a`- epics-add-snippet-to-active-alist-maybe: Prompt for snippet to add
-* `C-c s e`- epics-edit-snippet: Prompt for id and fetch the corresponding snippet to minibuffer
-* `C-c s d`- epics-remove-snippet: Prompt for id and remove the corresponding snippet
-* `C-c s w`- epics-save-active-snippet-alist: Save snippets to *epics-saved-snippets-file*
-* `C-c s c`- epics-clear-active-snippet-alist: Remove all snippets from active table
-* `C-c s r`- epics-restore-default-snippet-table: Restore default snippets to *epics-saved-snippets-file*
-* `C-c s l`- epics-load-saved-snippets-to-active-alist: Load snippets from *epics-saved-snippets-file*
+### Add/Remove Records
+* `C-c a`- epics-add-record: Add record near point
+* `C-c d`- epics-delete-record: Remove record at point
 
