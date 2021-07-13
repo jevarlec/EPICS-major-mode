@@ -391,6 +391,10 @@ string."
   "Insert record body near point, if point is not inside
 comment."
 
+  (when (= 0 (buffer-size))
+    (insert "\n")
+    (beginning-of-buffer))
+
   (interactive)
   (let ((check-line (epics--check-line-contents 0)))
 
@@ -398,10 +402,6 @@ comment."
     ;; but this will do for now
     (if (equal check-line 'comment)
         (message "Cannot insert record in comment")
-
-      (when (= 0 (buffer-size))
-        (insert "\n")
-        (beginning-of-buffer))
 
       (when (equal check-line 'record)
         (progn
