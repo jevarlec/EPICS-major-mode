@@ -4,7 +4,7 @@
 
 ;; Author: Jernej Varlec <jernej@varlec.si>
 ;; Keywords: elisp, epics
-;; Version: 0.5.0
+;; Version: 0.6.1
 
 ;; This file is not part of GNU Emacs.
 
@@ -20,8 +20,8 @@
 
 ;;; Description:
 
-;; A major mode for editing EPICS .db and .template files
-;; Features syntax highlighting and (eventually) code snippets.
+;; A major mode for editing EPICS .db and .template files.
+;; Consult README.md for detailed description and features.
 
 ;;; Code:
 
@@ -32,28 +32,58 @@
 
 ;; epics group for customization variables and variables themself
 (defgroup epics-config nil
-  "Customization variables for EPICS mode"
+  "Customization variables for EPICS mode."
   :group 'programming)
 
 (defcustom epics-indent-spaces 4
-  "Setting for desired number of spaces per brace depth. Default is 4."
+  "Setting for desired number of spaces per brace depth. Default
+is 4."
   :group 'epics-config
   :type 'number)
 
 (defcustom epics-path-to-base "env"
-  "Path where EPICS base is installed. Run M-x epics-mode after changing this.
-If set to 'env', then epics-mode will try to get path from
-environment variables.
-
-Default is 'env'."
+  "Path where EPICS base is installed.  Run M-x epics-mode after
+changing this.  If set to 'env', then epics-mode will try to get
+path from environment variables.  Default is 'env'."
   :group 'epics-config
   :type '(choice (const :tag "From environment variables" :value "env")
-                (directory)))
+                 (directory)))
+
+(defcustom epics-var-dir
+  (concat user-emacs-directory "var/epics-mode/")
+  "Default directory used for persistent variables."
+  :group 'epics-config
+  :type '(choice (const :tag "user-emacs-directory/var/epics-mode"
+                        :value (concat user-emacs-directory "var/epics-mode/"))
+                 (directory)))
+
+(defcustom epics-always-include-desc t
+  "If set to non-nil, always add a DESC field when expanding a
+  snippet. It is set to t by default."
+  :group 'epics-config
+  :type '(choice (const :tag "Yes"
+                        :value t)
+                 (const :tag "No"
+                        :value nil)))
+
+(defcustom epics-always-include-scan t
+  "If set to non-nil, always include SCAN field when expanding a
+  snippet. It is set to t by default."
+  :group 'epics-config
+  :type '(choice (const :tag "Yes"
+                        :value t)
+                 (const :tag "No"
+                        :value nil)))
 
 ;; define custom faces
-(defface epics-mode-face-shadow
+(defface epics-face-shadow
   '((t :inherit shadow))
   "Face name to be used for records and fields.")
+
+(defface epics-face-link-param
+  '((t :inherit font-lock-constant-face
+       :weight bold))
+  "Bold face for link parameters.")
 
 ;; syntax highlighting
 (defvar-local epics-font-lock-keywords
@@ -70,9 +100,9 @@ Default is 'env'."
 
         `(
           ;; apply faces to generated regex
-          (,epics-shadow-regexp . 'epics-mode-face-shadow)
-          (,epics-link-params-regexp 0 font-lock-constant-face t)
-          (,(format "\"%s\"" epics-keywords-regexp) 1 font-lock-variable-name-face t)
+          (,epics-shadow-regexp . 'epics-face-shadow)
+          (,epics-link-params-regexp 0 'epics-face-link-param t)
+          (,(format "\"%s\"" epics-keywords-regexp) 1 font-lock-keyword-face t)
 
           ;; define regex for asyn i/o parameters
           (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\)[A-Za-z0-9_-]*?\"" 1 font-lock-type-face t)
@@ -81,15 +111,14 @@ Default is 'env'."
           (,"\"\\(@.+?\.proto\\)" 1 font-lock-type-face t)
 
           ;; define regex for macro highlighting
-          (,"$(\\([^ ]+?\\))" 0 font-lock-warning-face t))))
+          (,"$(\\([^ ]+?\\))" 0 font-lock-variable-name-face t))))
 
-;; epics utilities
-(defvar-local epics-followed-links-history nil)
 
+;; utility functions and variables
 (defvar-local epics--actual-base-dir nil
-  "Internal var that holds path to epics base.
-This is the variable that is actually used internally,
-not epics-path-to-base.")
+  "Internal var that holds path to epics base.  This is the
+  variable that is actually used internally, not
+  epics-path-to-base.")
 
 
 (defun epics--blank-line-p ()
@@ -101,61 +130,342 @@ not epics-path-to-base.")
       nil)))
 
 
+(defun epics--position-at-next-blank-line ()
+  "Position the point at the next blank line and return t when
+  successful."
+
+  (interactive)
+  (if (or (epics--blank-line-p)
+          (= (point) (point-max)))
+      t
+    (forward-line)
+    (epics--position-at-next-blank-line)))
+
+
 (defun epics--get-base-dir-string ()
   "Return validated base dir string for use in other functions."
 
-  (let ((path
-         (if (equal epics-path-to-base "env")
-             (getenv "EPICS_BASE")
-           epics-path-to-base)))
+  (let ((path (if (equal epics-path-to-base "env")
+                  (getenv "EPICS_BASE")
+                epics-path-to-base)))
 
-    (if (file-directory-p path)
-        (progn
-          (if (string-suffix-p "/" path)
-              path
-            (concat path "/")))
-      (message "Invalid base path set: %s" epics-path-to-base))))
+    (if path
+        (if (file-directory-p path)
+            (progn
+              (if (string-suffix-p "/" path)
+                  path
+                (concat path "/")))
+          (message "Invalid base path set: %s" epics-path-to-base))
+      (message "EPICS base not found")
+      nil)))
 
 
-(defun epics--string-on-line-p (string)
-  "Check if STRING is present on the current line."
+(defun epics--string-on-line-p (string &optional inside-strings)
+  "Return non-nil if STRING is present on the current line.  Also
+searches strings if INSIDE-STRINGS is non-nil."
 
   (save-excursion
     (beginning-of-line)
-    (skip-chars-forward "\t ")
-    (let ((result (looking-at-p string)))
-      (if (null result)
-          nil
-        t))))
+      (if (string-match-p string (thing-at-point 'line t))
+          (epics--search-forward string inside-strings)
+        nil)))
 
 
-(defun epics--copy-string-at-hook (hook del1 del2)
-  "Yanks the string located between DEL1 and DEL2, forward of HOOK.
-All inputs should be strings, returns the thing or nil if no match."
+(defun epics--search-forward (string &optional inside-strings inside-comments)
+  "Same as `search-forward', except it provides options to do
+search INSIDE-STRINGS or INSIDE-COMMENTS if set to t.  By default
+it does not search the comments or strings."
 
-  (let (p1 p2 string)
+  (epics--search-with #'search-forward string inside-strings inside-comments))
+
+
+(defun epics--search-backward (string &optional inside-strings inside-comments)
+  "Same as `search-backward', except it provides options to do
+search INSIDE-STRINGS or INSIDE-COMMENTS if set to t.  By default
+it does not search the comments or strings."
+
+  (epics--search-with #'search-backward string inside-strings inside-comments))
+
+
+(defun epics--search-with (search-func string &optional inside-strings inside-comments)
+  "Use this function with a wrapper! e.g. `epics--search-forward'
+
+Same as desired SEARCH-FUNC, except it provides options to do
+search INSIDE-STRINGS or INSIDE-COMMENTS if set to t.  By default
+it does not search the comments or strings."
+
+  (let ((point-after-search (funcall search-func string nil t nil)))
+
+    (cond ((null point-after-search) nil)
+
+          ((epics--inside-comment-p)
+           (if inside-comments
+               point-after-search
+             (epics--search-with search-func string inside-strings inside-comments)))
+
+          ((epics--inside-string-p)
+           (if inside-strings
+               point-after-search
+             (epics--search-with search-func string inside-strings inside-comments)))
+
+          (t point-after-search))))
+
+
+(defun epics--copy-string-at-word (word del1 del2)
+  "Yanks the string located between DEL1 and DEL2, forward of
+WORD.  All inputs are strings, return the string or nil if
+no match."
+
+  (let (p1 p2 return-string)
 
     (save-excursion
       (beginning-of-line)
       (skip-chars-forward " \t")
-      (if (not (equal (current-word) hook))
+      (if (not (equal (current-word) word))
           nil
         (skip-chars-forward (concat "^" del1 "\n"))
         (forward-char)
         (setq p1 (point))
         (skip-chars-forward (concat "^" del2 " .\n"))
-        (when (equal (following-char) "\"")
+        (when (equal (following-char) del2)
           (backward-char))
         (setq p2 (point))
         (save-excursion
           (goto-char (point-min))
-          (setq string (buffer-substring-no-properties p1 p2)))
-        string))))
+          (setq return-string (buffer-substring-no-properties p1 p2)))
+        return-string))))
 
 
+(defun epics--get-filenames-in-dir (dir &optional regex)
+  "Return a list of files present in DIR.  Optionally provide a
+REGEX string to filter files. DIR is a string."
+
+  (directory-files dir nil regex))
+
+
+(defun epics--get-parent-record-string (del1 del2)
+  "Return string between DEL1 and DEL2 pertaining to the record
+if point inside record block, nil if not. DEL1 and DEL2 are strings."
+
+  (save-excursion
+    (beginning-of-line)
+    (unless (epics--blank-line-p)
+      (skip-chars-forward " \t")
+      (cond ((epics--string-on-line-p "record") (epics--copy-string-at-word "record" del1 del2))
+            ((epics--inside-record-block-p nil)
+             (search-backward "record")
+             (epics--copy-string-at-word "record" del1 del2))
+            (t nil)))))
+
+
+(defun epics--inside-record-block-p (&optional body-only)
+  "Return t if point is inside a record block.  If BODY-ONLY is
+set to t, the check will ignore the first line that consists of
+record type and name."
+
+  (catch 'result
+    (unless body-only
+      (when (epics--string-on-line-p "record")
+        (throw 'result t)))
+    (cond ((> (car (syntax-ppss)) 0) t)
+          ((epics--string-on-line-p "{") t)
+          (t nil))))
+
+
+(defun epics--position-point-at-value ()
+  "Try to find position of value on the line inside a record
+block.  Calling this makes sense only after checking that point
+is inside a record block."
+
+  (if (epics--string-on-line-p "\"" t)
+      (epics--search-forward "\"" t)
+
+    (cond ((looking-at-p ",") (forward-char) (epics--position-point-at-value))
+          ((looking-at-p " ")
+           (cond ((looking-back ",") (forward-char) (epics--position-point-at-value))
+                 ((looking-at ")") t)))
+          ((looking-at-p ")") t))))
+
+
+(defun epics--point-at-value-p ()
+  "Check if point is located at the value on the line inside a
+record block.  Calling this makes sense only after checking that
+point is inside a record block."
+
+  (if (epics--inside-string-p)
+      t
+    (save-excursion
+      (backward-char 2)
+      (if (looking-at-p ",")
+          t
+        nil))))
+
+
+(defun epics--point-after-value-p ()
+  "Check if point is located after a value on the line inside a
+record block.  Calling this makes sense only after checking that
+point is inside a record block."
+
+  (interactive)
+  (let ((current-pos (point))
+        (after-value-pos nil))
+
+    (save-excursion
+      (beginning-of-line)
+      (epics--search-forward ")")
+      (backward-char)
+      (if (>= current-pos (point))
+          t
+        nil))))
+
+
+(defun epics--inside-string-p ()
+  "Return t if point in string."
+
+  (save-excursion
+    (when (= (point) (line-beginning-position))
+      (forward-char))
+    (if (null (nth 3 (syntax-ppss)))
+        nil
+      t)))
+
+
+(defun epics--inside-comment-p ()
+  "Return t if point in comment."
+
+  (save-excursion
+    (when (= (point) (line-beginning-position))
+      (forward-char))
+    (if (null (nth 4 (syntax-ppss)))
+        nil
+      t)))
+
+
+(defun epics--inside-comment-string-p ()
+  "Return t if point in comment or string."
+
+  (if (or (epics--inside-comment-p)
+          (epics--inside-string-p))
+      t
+    nil))
+
+
+(defun epics--check-line-contents (&optional N)
+  "Check whether the Nth line in front or back is comment,
+record, or blank.
+
+Checks the line in front of point by default or if N ==
+1. Negative number checks lines backwards. If N == 0 it checks
+current line.
+
+Return value is a symbol 'blank, 'record, 'comment, or nil."
+
+  (save-excursion
+    (unless (equal N 0)
+      (forward-line N))
+    (cond ((epics--blank-line-p) 'blank)
+          ((epics--inside-record-block-p) 'record)
+          ((epics--inside-comment-p) 'comment)
+          (t nil))))
+
+
+(defun epics--print-data-to-file (data filename)
+  "Write DATA as lisp object to file FILENAME. DATA can be any
+symbol or sexpression, FILENAME is a string."
+
+  (with-temp-file filename
+    (prin1 data (current-buffer))))
+
+
+(defun epics--read-data-from-file (filename)
+  "Read and return lisp objects from file FILENAME, which is a
+string."
+
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (read (current-buffer))))
+
+
+;; record adding/deleting
+(defun epics-add-record ()
+  "Insert record body near point, if point is not inside
+comment."
+
+  (interactive)
+  (let ((check-line (epics--check-line-contents 0)))
+
+    ;; comment handling can be done better,
+    ;; but this will do for now
+    (if (equal check-line 'comment)
+        (message "Cannot insert record in comment")
+
+      (when (= 0 (buffer-size))
+        (insert "\n")
+        (beginning-of-buffer))
+
+      (when (equal check-line 'record)
+        (progn
+          (epics--search-forward "}")
+          (insert "\n")))
+
+      (when (< 1 (line-number-at-pos))
+        (save-excursion
+          (previous-line)
+          (unless (epics--blank-line-p)
+            (end-of-line)
+            (insert "\n"))))
+
+      (insert "record(, \"\") {\n")
+      (when epics-always-include-desc
+        (insert "field(DESC, \"\")\n"))
+      (when epics-always-include-scan
+        (insert "field(SCAN, \"\")\n"))
+      (insert "}")
+
+      (save-excursion
+        (if (= (point) (point-max))
+            (insert "\n\n")
+          (next-line)
+          (unless (epics--blank-line-p)
+            (previous-line)
+            (end-of-line)
+            (insert "\n"))))
+
+      (let ((p1 (point))
+            (p2 (epics--search-backward "record")))
+        (indent-region p2 p1))
+
+      (epics--search-forward "("))))
+
+
+(defun epics-delete-record ()
+  "Remove record at point."
+
+  (interactive)
+  (if (epics--inside-record-block-p)
+      (progn
+        (epics--search-forward "}")
+
+        (let ((p1 (+ 1 (point)))
+              (p2 (epics--search-backward "record")))
+          (kill-region p1 p2))
+
+        (when (epics--blank-line-p)
+          (cond ((and (equal (epics--check-line-contents) 'blank)
+                     (equal (epics--check-line-contents -1) 'blank))
+                 (kill-line 2))
+                ((or (equal (epics--check-line-contents) 'blank)
+                     (equal (epics--check-line-contents -1) 'blank))
+                 (kill-line)))))
+
+    (message "Point not in record!")))
+
+
+;; epics reference functions
 (defun epics--render-help-file (html-file)
-  "Render the html help HTML-FILE in the help buffer if possible.
-HTML-FILE is a string containing absolute path to desired html file."
+  "Render the HTML-FILE in the help buffer if possible.
+HTML-FILE is a string containing absolute path to desired html
+file."
 
   (let ((buf-name "EPICS Reference")
         (dom))
@@ -180,8 +490,8 @@ HTML-FILE is a string containing absolute path to desired html file."
 
 
 (defun epics-open-reference ()
-  "Prompt user to select what reference file to open,
-then render it in a help buffer."
+  "Prompt user to select what reference file to open, then render
+it in a help buffer."
 
   (interactive)
   (let* ((help-dir (concat epics--actual-base-dir "html/"))
@@ -190,18 +500,11 @@ then render it in a help buffer."
     (epics--render-help-file (concat help-dir choice))))
 
 
-(defun epics--get-filenames-in-dir (dir &optional regex)
-  "Return a list of files present in DIR.
-Optionally provide a REGEX string to filter files."
-
-  (directory-files dir nil regex))
-
-
 (defun epics-describe-record ()
   "Open the record reference for the record at point."
 
   (interactive)
-  (let ((record (epics--get-parent-record-string-maybe "(" ",")))
+  (let ((record (epics--get-parent-record-string "(" ",")))
     (if (null record)
         (message "Point not in record!")
       (epics--render-help-file (concat epics--actual-base-dir
@@ -210,8 +513,13 @@ Optionally provide a REGEX string to filter files."
                                        "Record.html")))))
 
 
+;; navigation functions and variables
+(defvar-local epics-followed-links-history nil)
+
+
 (defun epics-retrace-link ()
-  "Pop from history the last record a link was followed from and return to it"
+  "Pop from history the last record a link was followed from and
+return to it."
 
   (interactive)
   (if (null epics-followed-links-history)
@@ -224,32 +532,14 @@ Optionally provide a REGEX string to filter files."
     (message "Links followed history: %s" epics-followed-links-history)))
 
 
-(defun epics--get-parent-record-string-maybe (del1 del2)
-  "Return string between DEL1 and DEL2 pertaining to the record
-if point inside record block, nil if not."
-
-  (save-excursion
-    (beginning-of-line)
-    (unless (epics--blank-line-p)
-      (skip-chars-forward " \t")
-      (cond ((epics--string-on-line-p "record") (epics--copy-string-at-hook "record" del1 del2))
-            ((cl-some #'epics--string-on-line-p '("{" "}" "field" "path" "addpath"
-                                                  "include" "menu" "choice"
-                                                  "recordtype" "device" "driver"
-                                                  "registrar" "function"
-                                                  "variable" "breaktable"
-                                                  "grecord" "info" "alias"))
-             (search-backward "record")
-             (epics--copy-string-at-hook "record" del1 del2))
-            (t nil)))))
-
-
 (defun epics-follow-link ()
-  "Try to find a link to a record on the current line and follow it"
+  "Try to find a link to a record on the current line and follow
+it."
 
   (interactive)
-  (let ((link (epics--copy-string-at-hook "field" "\"" "\""))
+  (let ((link (epics--copy-string-at-word "field" "\"" "\""))
         (pos nil))
+
     (save-excursion
       (goto-char (point-min))
       (setq pos (search-forward-regexp (format "record.+?\\([a-z ]+?\"%s\"\\)" link)
@@ -258,11 +548,75 @@ if point inside record block, nil if not."
     (if (null pos)
         (message "Not a link or record not found.")
       (unless (equal (car epics-followed-links-history)
-                     (epics--get-parent-record-string-maybe "\"" "\""))
-        (setq epics-followed-links-history (cons (epics--get-parent-record-string-maybe "\"" "\"")
+                     (epics--get-parent-record-string "\"" "\""))
+        (setq epics-followed-links-history (cons (epics--get-parent-record-string "\"" "\"")
                                                  epics-followed-links-history)))
       (goto-char pos)
       (message "Following %s" link))))
+
+
+(defun epics-next-record ()
+  "Find the next record block and set the point to the record
+type."
+
+  (interactive)
+  (end-of-line)
+  (when (epics--inside-record-block-p)
+    (search-forward "}"))
+  (epics--search-forward "record")
+  (epics--search-forward "("))
+
+
+(defun epics-previous-record ()
+  "Find the previous record block and set the point to the record
+type."
+
+  (interactive)
+  (beginning-of-line)
+  (when (epics--inside-record-block-p)
+    (if (epics--string-on-line-p "record")
+        (previous-line)
+      (epics--search-backward "record")
+      (previous-line)))
+  (epics--search-backward "record")
+  (epics--search-forward "("))
+
+
+(defun epics-next-value ()
+  "Position the point at the next possible value."
+
+  (interactive)
+  (cond ((epics--blank-line-p) (epics--search-forward "record") (epics-next-value))
+        ((epics--inside-string-p) (next-line) (beginning-of-line) (epics-next-value))
+        ((epics--inside-record-block-p)
+         (if (or (epics--point-after-value-p)
+                 (epics--point-at-value-p))
+             (progn
+               (next-line)
+               (beginning-of-line)
+               (epics-next-value))
+           (beginning-of-line)
+           (epics--search-forward ",")
+           (epics--position-point-at-value)))
+        (t (next-line) (epics-next-value))))
+
+
+(defun epics-previous-value ()
+  "Position the point at the previous possible value."
+
+  (interactive)
+  (cond ((epics--blank-line-p) (epics--search-backward "}") (epics-previous-value))
+        ((epics--inside-string-p) (previous-line) (end-of-line) (epics-previous-value))
+        ((epics--inside-record-block-p)
+         (if (epics--point-after-value-p)
+             (progn
+               (beginning-of-line)
+               (epics--search-forward ",")
+               (epics--position-point-at-value))
+           (previous-line)
+           (end-of-line)
+           (epics-previous-value)))
+        (t (previous-line) (epics-previous-value))))
 
 
 ;; indentation function
@@ -311,10 +665,19 @@ if point inside record block, nil if not."
 (defvar epics-mode-map nil "Keymap for epics-mode")
 (progn
   (setq epics-mode-map (make-sparse-keymap))
+  ;; help
+  (define-key epics-mode-map (kbd "C-c h r") #'epics-describe-record)
+  (define-key epics-mode-map (kbd "C-c h h") #'epics-open-reference)
+  ;; navigation
   (define-key epics-mode-map (kbd "C-c C-'") #'epics-follow-link)
   (define-key epics-mode-map (kbd "C-c C-;") #'epics-retrace-link)
-  (define-key epics-mode-map (kbd "C-c h r") #'epics-describe-record)
-  (define-key epics-mode-map (kbd "C-c h h") #'epics-open-reference))
+  (define-key epics-mode-map (kbd "C-c C-j") #'epics-next-value)
+  (define-key epics-mode-map (kbd "C-c C-k") #'epics-previous-value)
+  (define-key epics-mode-map (kbd "C-c C-l") #'epics-next-record)
+  (define-key epics-mode-map (kbd "C-c C-h") #'epics-previous-record)
+  ;; add/remove record
+  (define-key epics-mode-map (kbd "C-c a") #'epics-add-record)
+  (define-key epics-mode-map (kbd "C-c d") #'epics-delete-record))
 
 
 (define-derived-mode epics-mode prog-mode "EPICS"
@@ -322,6 +685,9 @@ if point inside record block, nil if not."
 
   ;; initial setup
   (setq-local epics--actual-base-dir (epics--get-base-dir-string))
+
+  (unless (file-accessible-directory-p epics-var-dir)
+    (make-directory epics-var-dir t))
 
   ;; enable syntax highlighting
   (setq-local font-lock-defaults '((epics-font-lock-keywords)))
