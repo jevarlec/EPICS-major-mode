@@ -388,49 +388,77 @@ string."
 
 ;; record adding/deleting
 (defun epics-add-record ()
-  ""
+  "Insert record body near point, if point is not inside
+comment."
+
   (interactive)
+  (let ((check-line (epics--check-line-contents 0)))
 
-  (when (= 0 (buffer-size))
-    (insert "\n")
-    (beginning-of-buffer))
+    ;; comment handling can be done better,
+    ;; but this will do for now
+    (if (equal check-line 'comment)
+        (message "Cannot insert record in comment")
 
-  (when (epics--inside-record-block-p)
+      (when (= 0 (buffer-size))
+        (insert "\n")
+        (beginning-of-buffer))
+
+      (when (equal check-line 'record)
+        (progn
+          (epics--search-forward "}")
+          (insert "\n")))
+
+      (when (< 1 (line-number-at-pos))
+        (save-excursion
+          (previous-line)
+          (unless (epics--blank-line-p)
+            (end-of-line)
+            (insert "\n"))))
+
+      (insert "record(, \"\") {\n")
+      (when epics-always-include-desc
+        (insert "field(DESC, \"\")\n"))
+      (when epics-always-include-scan
+        (insert "field(SCAN, \"\")\n"))
+      (insert "}")
+
+      (save-excursion
+        (if (= (point) (point-max))
+            (insert "\n\n")
+          (next-line)
+          (unless (epics--blank-line-p)
+            (previous-line)
+            (end-of-line)
+            (insert "\n"))))
+
+      (let ((p1 (point))
+            (p2 (epics--search-backward "record")))
+        (indent-region p2 p1))
+
+      (epics--search-forward "("))))
+
+
+(defun epics-delete-record ()
+  "Remove record at point."
+
+  (interactive)
+  (if (epics--inside-record-block-p)
       (progn
         (epics--search-forward "}")
-        (insert "\n")))
 
-  (when (< 1 (line-number-at-pos))
-    (save-excursion
-      (previous-line)
-      (unless (epics--blank-line-p)
-        (end-of-line)
-        (insert "\n"))))
+        (let ((p1 (+ 1 (point)))
+              (p2 (epics--search-backward "record")))
+          (kill-region p1 p2))
 
-  (insert "record(, \"\") {\n")
-  (when epics-always-include-desc
-    (insert "field(DESC, \"\")\n"))
-  (when epics-always-include-scan
-    (insert "field(SCAN, \"\")\n"))
-  (insert "}")
+        (when (epics--blank-line-p)
+          (cond ((and (equal (epics--check-line-contents) 'blank)
+                     (equal (epics--check-line-contents -1) 'blank))
+                 (kill-line 2))
+                ((or (equal (epics--check-line-contents) 'blank)
+                     (equal (epics--check-line-contents -1) 'blank))
+                 (kill-line)))))
 
-  (save-excursion
-    (next-line)
-    (unless (epics--blank-line-p)
-      (previous-line)
-      (end-of-line)
-      (insert "\n")))
-
-  (let ((p1 (point))
-        (p2 (epics--search-backward "record")))
-    (indent-region p2 p1))
-
-  (epics--search-forward "("))
-  
-    
-    
-;; (defun epics-delete-record)
-;; (defun epics-insert-field)
+    (message "Point not in record!")))
 
 
 ;; epics reference functions
@@ -631,9 +659,6 @@ type."
         (modify-syntax-entry ?# "<" synTable)
         (modify-syntax-entry ?\n ">" synTable)
 
-        ;; ; is a word constituent so it can be used with abbrevs
-        (modify-syntax-entry 59 "w" synTable)
-
         synTable))
 
 
@@ -649,7 +674,10 @@ type."
   (define-key epics-mode-map (kbd "C-c C-j") #'epics-next-value)
   (define-key epics-mode-map (kbd "C-c C-k") #'epics-previous-value)
   (define-key epics-mode-map (kbd "C-c C-l") #'epics-next-record)
-  (define-key epics-mode-map (kbd "C-c C-h") #'epics-previous-record))
+  (define-key epics-mode-map (kbd "C-c C-h") #'epics-previous-record)
+  ;; add/remove record
+  (define-key epics-mode-map (kbd "C-c a") #'epics-add-record)
+  (define-key epics-mode-map (kbd "C-c d") #'epics-delete-record))
 
 
 (define-derived-mode epics-mode prog-mode "EPICS"
