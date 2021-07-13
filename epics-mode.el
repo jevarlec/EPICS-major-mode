@@ -350,6 +350,25 @@ point is inside a record block."
     nil))
 
 
+(defun epics--check-line-contents (&optional N)
+  "Check whether the Nth line in front or back is comment,
+record, or blank.
+
+Checks the line in front of point by default or if N ==
+1. Negative number checks lines backwards. If N == 0 it checks
+current line.
+
+Return value is a symbol 'blank, 'record, 'comment, or nil."
+
+  (save-excursion
+    (unless (equal N 0)
+      (forward-line N))
+    (cond ((epics--blank-line-p) 'blank)
+          ((epics--inside-record-block-p) 'record)
+          ((epics--inside-comment-p) 'comment)
+          (t nil))))
+
+
 (defun epics--print-data-to-file (data filename)
   "Write DATA as lisp object to file FILENAME. DATA can be any
 symbol or sexpression, FILENAME is a string."
