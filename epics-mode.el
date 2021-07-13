@@ -322,17 +322,23 @@ point is inside a record block."
 (defun epics--inside-string-p ()
   "Return t if point in string."
 
-  (if (null (nth 3 (syntax-ppss)))
-      nil
-    t))
+  (save-excursion
+    (when (= (point) (line-beginning-position))
+      (forward-char))
+    (if (null (nth 3 (syntax-ppss)))
+        nil
+      t)))
 
 
 (defun epics--inside-comment-p ()
   "Return t if point in comment."
 
-  (if (null (nth 4 (syntax-ppss)))
-      nil
-    t))
+  (save-excursion
+    (when (= (point) (line-beginning-position))
+      (forward-char))
+    (if (null (nth 4 (syntax-ppss)))
+        nil
+      t)))
 
 
 (defun epics--inside-comment-string-p ()
