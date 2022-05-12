@@ -105,7 +105,7 @@ path from environment variables.  Default is 'env'."
           (,(format "\"%s\"" epics-keywords-regexp) 1 font-lock-keyword-face t)
 
           ;; define regex for asyn i/o parameters
-          (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\)[A-Za-z0-9_-]*?\"" 1 font-lock-type-face t)
+          (,"\"\\(@\\(asyn\\|asynMask\\)\\((.+?)\\)\\).*?\"" 1 font-lock-type-face t)
 
           ;; define regex for streamdevice i/o parameters
           (,"\"\\(@.+?\.proto\\)" 1 font-lock-type-face t)
