@@ -420,6 +420,12 @@ type."
   (unless (file-accessible-directory-p epics-var-dir)
     (make-directory epics-var-dir t))
 
+  ;;imenu
+  (setq-local imenu-generic-expression
+              '(("Record" "^record\\s-*(\\(.+\\))" 1)
+                ("Alias" "^\\s-*alias(\\(.+\\))" 1)
+                ("Info" "^\\s-*info(\\(.+\\))" 1)))
+
   ;; enable syntax highlighting
   (setq-local font-lock-defaults '((epics-font-lock-keywords)))
 
