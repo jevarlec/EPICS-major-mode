@@ -90,6 +90,27 @@
           (,"$(\\([^ ]+?\\))" 0 font-lock-variable-name-face t))))
 
 
+;; completion-at-point
+(defun epics-db-completion-at-point ()
+  "This is the function to be used for the hook `completion-at-point-functions'."
+  (unless (epics-util--inside-comment-string-p)
+    (let* ((bds (bounds-of-thing-at-point 'symbol))
+           (start (car bds))
+           (end (cdr bds)))
+      (cond ((and (epics-util--inside-string-p)
+                  (epics-db--inside-record-block-p t))
+             (list start end epics-db-general-keywords . nil))
+            ((epics-util--string-on-line-p "record")
+             (list start end epics-db-record-keywords))
+            ((and (epics-db--inside-record-block-p)
+                  (epics-util--string-on-line-p "field"))
+             (list start end epics-db-field-keywords . nil))
+            ((epics-db--inside-record-block-p t)
+             (list start end '("field" "info" "alias") . nil))
+            ((not (epics-db--inside-record-block-p)) (list start end '("record") . nil))
+            (t nil)))))
+
+
 ;; utility functions and variables
 (defvar-local epics--actual-base-dir nil
   "Internal var that holds path to epics base.  This is the
@@ -420,6 +441,8 @@ type."
 
   (unless (file-accessible-directory-p epics-var-dir)
     (make-directory epics-var-dir t))
+
+  (add-hook 'completion-at-point-functions 'epics-db-completion-at-point nil 'local)
 
   ;;imenu
   (setq-local imenu-generic-expression
