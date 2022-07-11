@@ -111,6 +111,31 @@
             (t nil)))))
 
 
+;; abbrevs
+(define-abbrev-table 'epics-db-mode-abbrev-table nil "Abbrev table for epics-db-mode"
+  :system t)
+
+(define-abbrev epics-db-mode-abbrev-table "record" ""
+  #'epics-db-add-record
+  :system t
+  :enable-function (lambda () (not (or (epics-util--inside-comment-string-p)
+                                       (epics-db--inside-record-block-p)))))
+
+(define-abbrev epics-db-mode-abbrev-table "field" ""
+  #'epics-db--insert-field
+  :system t
+  :enable-function (lambda () (and (not (epics-util--inside-comment-string-p))
+                                   (epics-db--inside-record-block-p)
+                                   (epics-util--regexp-on-line-p "^\\s-*field$"))))
+
+(define-abbrev epics-db-mode-abbrev-table "info" ""
+  #'epics-db--insert-info
+  :system t
+  :enable-function (lambda () (and (not (epics-util--inside-comment-string-p))
+                                   (epics-db--inside-record-block-p)
+                                   (epics-util--regexp-on-line-p "^\\s-*info$"))))
+
+
 ;; utility functions and variables
 (defvar-local epics--actual-base-dir nil
   "Internal var that holds path to epics base.  This is the
@@ -141,7 +166,7 @@ record type and name."
 
   (catch 'result
     (unless body-only
-      (when (epics-util--string-on-line-p "record")
+      (when (epics-util--regexp-on-line-p "record(.+?,.+?)")
         (throw 'result t)))
     (cond ((> (car (syntax-ppss)) 0) t)
           ((epics-util--string-on-line-p "{") t)
@@ -196,6 +221,59 @@ point is inside a record block."
 
 
 ;; record adding/deleting
+(defun epics-db--insert-record (&optional type)
+  ""
+  (beginning-of-line)
+  (insert "record(, \"\") {\n")
+  (when epics-db-always-include-desc
+    (insert "field(DESC, \"\")\n"))
+  (when epics-db-always-include-scan
+    (insert "field(SCAN, \"\")\n"))
+  (insert "}")
+
+  (save-excursion
+    (if (= (point) (point-max))
+        (insert "\n\n")
+      (next-line)
+      (unless (epics-util--blank-line-p)
+        (previous-line)
+        (end-of-line)
+        (insert "\n"))))
+
+  (let ((p1 (point))
+        (p2 (epics-util--search-backward "record")))
+    (indent-region p2 p1))
+
+  (epics-util--search-forward "(")
+
+  (unless (null type)
+    (insert type)
+    (epics-db-next-value))
+  t)
+
+
+(defun epics-db--insert-field (&optional is-info include-newline type)
+  ""
+  (let ((field (if is-info "info" "field")))
+    (beginning-of-line)
+    (insert (concat field "(, \"\")"))
+    (unless (null include-newline)
+      (insert "\n"))
+
+    (epics-util--search-backward field)
+    (epics-util-indent-line)
+    (epics-util--search-forward "(")
+
+    (unless (null type)
+      (insert type)
+      (epics-db-next-value)))
+  t)
+
+(defun epics-db--insert-info ()
+  ""
+  (epics-db--insert-field t))
+
+
 (defun epics-db-add-record ()
   "Insert record body near point, if point is not inside
 comment."
@@ -224,27 +302,12 @@ comment."
             (end-of-line)
             (insert "\n"))))
 
-      (insert "record(, \"\") {\n")
-      (when epics-db-always-include-desc
-        (insert "field(DESC, \"\")\n"))
-      (when epics-db-always-include-scan
-        (insert "field(SCAN, \"\")\n"))
-      (insert "}")
+      (epics-db--insert-record))))
 
-      (save-excursion
-        (if (= (point) (point-max))
-            (insert "\n\n")
-          (next-line)
-          (unless (epics-util--blank-line-p)
-            (previous-line)
-            (end-of-line)
-            (insert "\n"))))
-
-      (let ((p1 (point))
-            (p2 (epics-util--search-backward "record")))
-        (indent-region p2 p1))
-
-      (epics-util--search-forward "("))))
+(put #'epics-db-add-record 'no-self-insert t)
+(put #'epics-db--insert-field 'no-self-insert t)
+(put #'epics-db--insert-info 'no-self-insert t)
+(put #'epics-db--insert-record 'no-self-insert t)
 
 
 (defun epics-db-delete-record ()
@@ -458,7 +521,12 @@ type."
   (setq-local comment-end "")
 
   ;; epics indentation function
-  (setq-local indent-line-function #'epics-util-indent-line))
+  (setq-local indent-line-function #'epics-util-indent-line)
+
+  ;; enable abbrevs
+  ;; (setq-local abbrev-expand-function #'epics-db--expand-abbrev)
+  (setq-local skeleton-further-elements '((abbrev-mode nil)))
+  (abbrev-mode t))
 
 
 (provide 'epics-db)
