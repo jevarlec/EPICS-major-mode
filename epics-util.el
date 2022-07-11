@@ -114,12 +114,12 @@ it does not search the comments or strings."
 
     (cond ((null point-after-search) nil)
 
-          ((epics--inside-comment-p)
+          ((epics-util--inside-comment-p)
            (if inside-comments
                point-after-search
              (epics-util--search-with search-func string inside-strings inside-comments)))
 
-          ((epics--inside-string-p)
+          ((epics-util--inside-string-p)
            (if inside-strings
                point-after-search
              (epics-util--search-with search-func string inside-strings inside-comments)))

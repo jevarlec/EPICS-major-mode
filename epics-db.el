@@ -106,7 +106,7 @@ if point inside record block, nil if not. DEL1 and DEL2 are strings."
     (unless (epics-util--blank-line-p)
       (skip-chars-forward " \t")
       (cond ((epics-util--string-on-line-p "record") (epics-util--copy-string-at-word "record" del1 del2))
-            ((epics--inside-record-block-p nil)
+            ((epics-db--inside-record-block-p nil)
              (search-backward "record")
              (epics-util--copy-string-at-word "record" del1 del2))
             (t nil)))))
@@ -146,7 +146,7 @@ is inside a record block."
 record block.  Calling this makes sense only after checking that
 point is inside a record block."
 
-  (if (epics--inside-string-p)
+  (if (epics-util--inside-string-p)
       t
     (save-excursion
       (backward-char 2)
@@ -383,7 +383,7 @@ type."
 (defvar epics-db-syntax-table nil "Syntax table for 'epics-db'.")
 
 ;; set # as a comment symbol
-(setq epics-db-syntax-table
+(setq epics-db-mode-syntax-table
       (let ((synTable (make-syntax-table)))
 
         ;; # is a comment until \n
@@ -393,22 +393,22 @@ type."
         synTable))
 
 
-(defvar epics-db-map nil "Keymap for epics-db")
+(defvar epics-db-mode-map nil "Keymap for epics-db")
 (progn
-  (setq epics-db-map (make-sparse-keymap))
+  (setq epics-db-mode-map (make-sparse-keymap))
   ;; help
-  (define-key epics-db-map (kbd "C-c h r") #'epics-db-describe-record)
-  (define-key epics-db-map (kbd "C-c h h") #'epics-db-open-reference)
+  (define-key epics-db-mode-map (kbd "C-c h r") #'epics-db-describe-record)
+  (define-key epics-db-mode-map (kbd "C-c h h") #'epics-db-open-reference)
   ;; navigation
-  (define-key epics-db-map (kbd "C-c C-'") #'epics-db-follow-link)
-  (define-key epics-db-map (kbd "C-c C-;") #'epics-db-retrace-link)
-  (define-key epics-db-map (kbd "C-c C-j") #'epics-db-next-value)
-  (define-key epics-db-map (kbd "C-c C-k") #'epics-db-previous-value)
-  (define-key epics-db-map (kbd "C-c C-l") #'epics-db-next-record)
-  (define-key epics-db-map (kbd "C-c C-h") #'epics-db-previous-record)
+  (define-key epics-db-mode-map (kbd "C-c C-'") #'epics-db-follow-link)
+  (define-key epics-db-mode-map (kbd "C-c C-;") #'epics-db-retrace-link)
+  (define-key epics-db-mode-map (kbd "C-c C-j") #'epics-db-next-value)
+  (define-key epics-db-mode-map (kbd "C-c C-k") #'epics-db-previous-value)
+  (define-key epics-db-mode-map (kbd "C-c C-l") #'epics-db-next-record)
+  (define-key epics-db-mode-map (kbd "C-c C-h") #'epics-db-previous-record)
   ;; add/remove record
-  (define-key epics-db-map (kbd "C-c a") #'epics-db-add-record)
-  (define-key epics-db-map (kbd "C-c d") #'epics-db-delete-record))
+  (define-key epics-db-mode-map (kbd "C-c a") #'epics-db-add-record)
+  (define-key epics-db-mode-map (kbd "C-c d") #'epics-db-delete-record))
 
 
 (define-derived-mode epics-db-mode prog-mode "EPICS-DB"
