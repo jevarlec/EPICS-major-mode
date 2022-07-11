@@ -72,9 +72,19 @@ searches strings if INSIDE-STRINGS is non-nil."
 
   (save-excursion
     (beginning-of-line)
-      (if (string-match-p string (thing-at-point 'line t))
-          (epics--search-forward string inside-strings)
-        nil)))
+    (if (string-match-p string (thing-at-point 'line t))
+        (epics-util--search-forward string inside-strings)
+      nil)))
+
+
+(defun epics-util--regexp-on-line-p (regexp &optional inside-strings)
+  ""
+
+  (save-excursion
+    (beginning-of-line)
+    (if (string-match-p regexp (thing-at-point 'line t))
+        (epics-util--search-with #'search-forward-regexp regexp inside-strings nil)
+      nil)))
 
 
 (defun epics-util--search-forward (string &optional inside-strings inside-comments)
