@@ -514,7 +514,7 @@ type."
                 ("Info" "^\\s-*info(\\(.+\\))" 1)))
 
   ;; enable syntax highlighting
-  (setq-local font-lock-defaults '((epics-font-lock-keywords)))
+  (setq-local font-lock-defaults '((epics-db-font-lock-keywords)))
 
   ;; comment-dwim functionality
   (setq-local comment-start "# ")
