@@ -222,7 +222,7 @@ point is inside a record block."
 
 ;; record adding/deleting
 (defun epics-db--insert-record (&optional type)
-  ""
+  "Insert a record template with TYPE, if provided."
   (beginning-of-line)
   (insert "record(, \"\") {\n")
   (when epics-db-always-include-desc
@@ -253,7 +253,10 @@ point is inside a record block."
 
 
 (defun epics-db--insert-field (&optional is-info include-newline type)
-  ""
+  "Insert a field template.
+Non-nil IS-INFO will insert info field, non-nil INCLUDE-NEWLINE
+will add a newline at the end. If TYPE is specified, it will add
+it."
   (let ((field (if is-info "info" "field")))
     (beginning-of-line)
     (insert (concat field "(, \"\")"))
@@ -270,7 +273,7 @@ point is inside a record block."
   t)
 
 (defun epics-db--insert-info ()
-  ""
+  "Wrapper for inserting info fields."
   (epics-db--insert-field t))
 
 
@@ -304,6 +307,7 @@ comment."
 
       (epics-db--insert-record))))
 
+;; these props are for abbrevs, so spaces are not inserted
 (put #'epics-db-add-record 'no-self-insert t)
 (put #'epics-db--insert-field 'no-self-insert t)
 (put #'epics-db--insert-info 'no-self-insert t)
@@ -524,8 +528,6 @@ type."
   (setq-local indent-line-function #'epics-util-indent-line)
 
   ;; enable abbrevs
-  ;; (setq-local abbrev-expand-function #'epics-db--expand-abbrev)
-  (setq-local skeleton-further-elements '((abbrev-mode nil)))
   (abbrev-mode t))
 
 
